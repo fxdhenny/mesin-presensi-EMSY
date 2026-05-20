@@ -2,7 +2,9 @@ import sqlite3
 import os
 
 # Melacak lokasi database
-DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'attendance.db')
+# Alternatif penulisan yang lebih elegan:
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+DB_PATH = os.path.join(BASE_DIR, 'data', 'attendance.db')
 
 def verifikasi_kartu(uid_terbaca):
     """
