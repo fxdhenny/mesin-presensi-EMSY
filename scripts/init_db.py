@@ -6,6 +6,9 @@ DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'atte
 def create_database():
     print(f"[*] Menciptakan database EMSY di: {DB_PATH}")
     
+    # Pastikan folder 'data' sudah ada
+    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+    
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
@@ -40,46 +43,53 @@ def create_database():
         CREATE TABLE IF NOT EXISTS presensi_harian (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             mahasiswa_id INTEGER,
-            tanggal DATE,
-            status TEXT DEFAULT 'alfa',
-            kedatangan TEXT,
-            kepulangan TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            tanggal DATE DEFAULT (date('now', 'localtime')), 
+            status TEXT DEFAULT 'alfa',      
+            kedatangan TEXT,                 
+            kepulangan TEXT,                 
+            created_at DATETIME DEFAULT (datetime('now', 'localtime')), 
+            updated_at DATETIME DEFAULT (datetime('now', 'localtime')), 
             FOREIGN KEY(mahasiswa_id) REFERENCES mahasiswa(id),
             UNIQUE(mahasiswa_id, tanggal)
         )
     ''')
 
     print("[*] Membuat tabel 'presensi_logs'...")
+    # FIX 1: Mengubah DEFAULT ke datetime lokal agar log mencatat Real-Time lokal laptop
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS presensi_logs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             attendance_id INTEGER,
             perubahan TEXT,
-            waktu DATETIME DEFAULT CURRENT_TIMESTAMP,
+            waktu DATETIME DEFAULT (datetime('now', 'localtime')),
             FOREIGN KEY(attendance_id) REFERENCES presensi_harian(id) ON DELETE CASCADE
         )
     ''')
 
     print("[*] Menambahkan Trigger untuk updated_at...")
+    # FIX 2: Perbaikan total sintaksis update yang tumpang tindih
     cursor.execute('''
         CREATE TRIGGER IF NOT EXISTS trigger_update_timestamp
         AFTER UPDATE ON presensi_harian
         FOR EACH ROW
         BEGIN
             UPDATE presensi_harian 
-            SET updated_at = CURRENT_TIMESTAMP 
+            SET updated_at = datetime('now', 'localtime') 
             WHERE id = OLD.id;
         END;
     ''')
 
     print("[*] Menambahkan Trigger untuk Audit Log (presensi_logs)...")
+    # FIX 3: Menggunakan IFNULL pada klausa WHEN agar transisi dari NULL ke STRING tetap tercatat di log
     cursor.execute('''
         CREATE TRIGGER IF NOT EXISTS trigger_log_perubahan
         AFTER UPDATE ON presensi_harian
         FOR EACH ROW
-        WHEN (OLD.status != NEW.status OR OLD.kedatangan != NEW.kedatangan OR OLD.kepulangan != NEW.kepulangan)
+        WHEN (
+            OLD.status != NEW.status OR 
+            IFNULL(OLD.kedatangan, 'Kosong') != IFNULL(NEW.kedatangan, 'Kosong') OR 
+            IFNULL(OLD.kepulangan, 'Kosong') != IFNULL(NEW.kepulangan, 'Kosong')
+        )
         BEGIN
             INSERT INTO presensi_logs (attendance_id, perubahan)
             VALUES (
@@ -93,7 +103,7 @@ def create_database():
 
     conn.commit()
     conn.close()
-    print("[+] Database EMSY beserta sistem Audit Log siap digunakan!")
+    print("[+] Database EMSY beserta sistem Audit Log REAL-TIME siap digunakan!")
 
 if __name__ == '__main__':
     create_database()
