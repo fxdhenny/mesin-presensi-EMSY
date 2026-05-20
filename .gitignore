@@ -1,0 +1,23 @@
+# 1. Virtual Environment (Sangat berat, tim harus install mandiri)
+venv/
+env/
+
+# 2. Python Cache (File sampah hasil kompilasi Python)
+__pycache__/
+*.pyc
+*.pyo
+
+# 3. Database (SANGAT KRITIS - Cegah kebocoran data rombel)
+data/*.db
+data/*.sqlite3
+data/*.sqlite
+
+# 4. Environment Variables (SANGAT KRITIS - Cegah kebocoran token/password)
+.env
+
+# 5. Logs (File catatan error tidak perlu diunggah)
+logs/*.log
+
+# 6. File OS/Sistem (File sampah otomatis dari sistem operasi)
+.DS_Store
+Thumbs.db
