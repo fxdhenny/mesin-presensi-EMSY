@@ -43,6 +43,7 @@ def create_database():
         CREATE TABLE IF NOT EXISTS presensi_harian (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             mahasiswa_id INTEGER,
+            nama TEXT,
             tanggal DATE DEFAULT (date('now', 'localtime')), 
             status TEXT DEFAULT 'alfa',      
             kedatangan TEXT,                 

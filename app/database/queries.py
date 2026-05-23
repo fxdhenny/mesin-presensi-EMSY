@@ -111,12 +111,22 @@ def ambil_data_presensi_hari_ini(db_path, kelas, rombel):
         
         # JOIN untuk menggabungkan nama dari tabel mahasiswa dengan status dari presensi_harian
         cursor.execute('''
-            SELECT p.id, m.no, m.nim, m.nama, p.status, p.kedatangan, p.kepulangan
-            FROM presensi_harian p
-            JOIN mahasiswa m ON p.mahasiswa_id = m.id
-            WHERE m.target_kelas = ? AND m.target_rombel = ? AND p.tanggal = ?
-            ORDER BY m.no ASC
-        ''', (kelas, rombel, tanggal_hari_ini))
+    SELECT 
+        p.id,
+        m.no,
+        m.nim,
+        m.nama,
+        p.status,
+        p.kedatangan,
+        p.kepulangan
+    FROM presensi_harian p
+    JOIN mahasiswa m 
+        ON p.mahasiswa_id = m.id
+    WHERE m.target_kelas = ? 
+      AND m.target_rombel = ?
+      AND p.tanggal = ?
+    ORDER BY m.no ASC
+''', (kelas, rombel, tanggal_hari_ini))
         
         hasil = cursor.fetchall()
         conn.close()
