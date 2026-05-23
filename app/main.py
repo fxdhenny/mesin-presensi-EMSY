@@ -4,6 +4,13 @@ import threading
 import queue
 import time
 import os
+import sys
+
+# --- TAMBAHKAN INI DI ATAS IMPOR MODUL LOKAL ---
+# Memastikan Python mendeteksi folder 'app' sebagai root modul lokal
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+if ROOT_DIR not in sys.path:
+    sys.path.append(ROOT_DIR)
 
 # Mengimpor modul backend inti
 from core.rfid_service import RFIDReader
