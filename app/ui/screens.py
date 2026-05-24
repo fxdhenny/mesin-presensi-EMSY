@@ -152,6 +152,9 @@ class RombelSelectScreen(ctk.CTkFrame):
 # =====================================================================
 # LAYAR 3: NIM ANGGOTA ROMBEL (Tanpa Scroll)
 # =====================================================================
+# =====================================================================
+# LAYAR 3: NIM ANGGOTA ROMBEL (Tanpa Scroll)
+# =====================================================================
 class NimListScreen(ctk.CTkFrame):
     def __init__(self, master, fungsi_navigasi):
         super().__init__(master, fg_color=C["bg"])
@@ -162,9 +165,20 @@ class NimListScreen(ctk.CTkFrame):
         self.header = ctk.CTkFrame(self, height=90, fg_color=C["primary"], corner_radius=0)
         self.header.pack(side="top", fill="x")
         self.header.pack_propagate(False)
+
+        self.bottom_frame = ctk.CTkFrame(self, fg_color="transparent")
+        self.bottom_frame.pack(side="bottom", fill="x", padx=40, pady=(0, 30))
         
-        self.btn_back = ctk.CTkButton(self.header, text="< Back", width=70, height=35, fg_color=C["btn"], hover_color=C["btn_hover"], font=("Arial", 14, "bold"), command=lambda: self.fungsi_navigasi("rombel-select"))
-        self.btn_back.place(x=20, y=25)
+        # Buat objek tombol Back (Jangan langsung di-.place() di sini agar tidak langsung muncul)
+        self.btn_back = ctk.CTkButton(
+            self.header, text="< Back", width=70, height=35, 
+            fg_color=C["btn"], hover_color=C["btn_hover"], 
+            font=("Arial", 14, "bold"), 
+            command=lambda: self.fungsi_navigasi("rombel-select")
+        )
+
+        self.btn_home = ctk.CTkButton(self.bottom_frame, text="← HOME", fg_color=C["primary"], hover_color="#5a4c3e", text_color=C["white"], font=("Arial", 13, "bold"), corner_radius=40, width=90, height=35, command=lambda: self.fungsi_navigasi("welcome"))
+        self.btn_home.pack(side="left")
 
         self.label_judul = ctk.CTkLabel(self.header, text='ROMBEL "C3"', text_color=C["text"], font=("Arial", 45, "bold"))
         self.label_judul.pack(expand=True)
@@ -177,6 +191,13 @@ class NimListScreen(ctk.CTkFrame):
         self.rombel_aktif = string_rombel
         self.label_judul.configure(text=f'ROMBEL "{string_rombel}"')
         
+        # --- LOGIKA KENDALI TOMBOL BACK (MASTER VS ROMBEL) ---
+        # Mengecek variabel 'is_master' yang ada di kelas utama main.py
+        if hasattr(self.master, 'is_master') and self.master.is_master:
+            self.btn_back.place(x=20, y=25)  # Munculkan jika akses Master
+        else:
+            self.btn_back.place_forget()     # Sembunyikan total jika akses Rombel Biasa
+        
         kelas_mhs = string_rombel[0]
         rombel_mhs = string_rombel[1:]
         
@@ -188,7 +209,7 @@ class NimListScreen(ctk.CTkFrame):
             
         id_list_rombel = [baris[0] for baris in data_mhs]
         
-        # Cetak Grid 4x3 - dimensi pas agar tidak overflow
+        # Cetak Grid 4x3
         for index, baris in enumerate(data_mhs):
             id_db = baris[0]
             nim_mahasiswa = baris[2]
@@ -265,7 +286,7 @@ class StudentDetailScreen(ctk.CTkFrame):
         self.bottom_frame = ctk.CTkFrame(self, fg_color="transparent")
         self.bottom_frame.pack(side="bottom", fill="x", padx=40, pady=(0, 30))
         
-        self.btn_back = ctk.CTkButton(self.bottom_frame, text="< BACK", fg_color=C["primary"], hover_color="#5a4c3e", text_color=C["white"], font=("Arial", 20, "bold"), corner_radius=25, width=140, height=50, command=lambda: self.fungsi_navigasi("nim-list", "kembali"))
+        self.btn_back = ctk.CTkButton(self.bottom_frame, text="< BACK", fg_color=C["primary"], hover_color="#5a4c3e", text_color=C["white"], font=("Arial", 20, "bold"), corner_radius=25, width=140, height=50, command=lambda: self.fungsi_navigasi("nim-list"))
         self.btn_back.pack(side="left")
         
         self.btn_home = ctk.CTkButton(self.bottom_frame, text="HOME", fg_color=C["primary"], hover_color="#5a4c3e", text_color=C["white"], font=("Arial", 20, "bold"), corner_radius=25, width=140, height=50, command=lambda: self.fungsi_navigasi("welcome"))
