@@ -233,21 +233,25 @@ class StudentDetailScreen(ctk.CTkFrame):
         
         # --- FRAME ATAS (Kiri: Info, Kanan: Tombol Bulat) ---
         self.top_section = ctk.CTkFrame(self, fg_color="transparent")
-        self.top_section.pack(fill="both", expand=True, padx=40, pady=(30, 10))
+        self.top_section.pack(fill="both", expand=True, padx=40, pady=(30, 30))
+
+        self.top_frame = ctk.CTkFrame(self.top_section, fg_color="transparent")
+        self.top_frame.pack(side="top", fill="both", expand=True)
 
         self.left_frame = ctk.CTkFrame(self.top_section, fg_color="transparent")
-        self.left_frame.pack(side="left", fill="both", expand=True)
+        self.left_frame.pack(side="left", fill="both", expand=True, padx=(0, 0), pady=(5, 0))
+        
 
-        self.title_label = ctk.CTkLabel(self.left_frame, text="DATA\nMAHASISWA", text_color=C["primary"], font=("Arial", 45, "bold"), justify="left")
-        self.title_label.pack(anchor="w", pady=(0, 20))
+        self.title_label = ctk.CTkLabel(self.top_frame, text="DATA MAHASISWA", text_color=C["primary"], font=("Arial", 45, "bold"), justify="left")
+        self.title_label.pack(anchor="center", pady=(0, 20))
         
         # Panel Info
-        self.card_info = ctk.CTkFrame(self.left_frame, fg_color=C["btn"], corner_radius=15, height=210)
+        self.card_info = ctk.CTkFrame(self.left_frame, fg_color=C["btn"], corner_radius=15, height=250)
         self.card_info.pack(fill="x")
         self.card_info.pack_propagate(False)
         
         self.label_nama = ctk.CTkLabel(self.card_info, text="Nama : ", text_color=C["white"], font=("Arial", 22, "bold"), wraplength=350, justify="left")
-        self.label_nama.pack(anchor="w", padx=20, pady=(20, 10))
+        self.label_nama.pack(anchor="w", padx=20, pady=(40, 10))
         
         self.label_nim = ctk.CTkLabel(self.card_info, text="NIM    : ", text_color=C["white"], font=("Arial", 22, "bold"))
         self.label_nim.pack(anchor="w", padx=20, pady=4)
@@ -255,12 +259,12 @@ class StudentDetailScreen(ctk.CTkFrame):
         self.label_kelas = ctk.CTkLabel(self.card_info, text="Kelas  : ", text_color=C["white"], font=("Arial", 22, "bold"))
         self.label_kelas.pack(anchor="w", padx=20, pady=4)
 
-        self.label_status_info = ctk.CTkLabel(self.card_info, text="Status  : ", text_color=C["white"], font=("Arial", 16, "bold"))
+        self.label_status_info = ctk.CTkLabel(self.card_info, text="Status  : ", text_color=C["white"], font=("Arial", 22, "bold"))
         self.label_status_info.pack(anchor="w", padx=20, pady=4)
 
         # --- Bagian Kanan (Tombol Presensi) ---
         self.right_frame = ctk.CTkFrame(self.top_section, fg_color="transparent")
-        self.right_frame.pack(side="right", fill="y", padx=(20, 0), pady=(30, 0))
+        self.right_frame.pack(side="right", fill="y", padx=(0, 0), pady=(0, 0))
         
         # Labeling baru disesuaikan dengan kode teman
         self.opsi_bulatan = [
