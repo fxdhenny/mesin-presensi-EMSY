@@ -6,6 +6,7 @@ import platform
 import string
 import customtkinter as ctk
 from datetime import datetime
+from tkinter import messagebox
 
 # Konfigurasi jalur database (naik 3 tingkat dari folder ui)
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -49,7 +50,6 @@ C = {
     "top_bar": "#B99B7E",        # Header bar welcome
     "white": "white"
 }
-
 # =====================================================================
 # LAYAR 1: WELCOME SCREEN (800x480 Optimized)
 # =====================================================================
@@ -143,16 +143,80 @@ class RombelSelectScreen(ctk.CTkFrame):
         )
         self.btn_export.grid(row=0, column=3, padx=(30, 15), pady=15)
 
+        self.btn_reset = ctk.CTkButton(
+            self.grid_frame,
+            text="RESET",
+            fg_color="#8B0000",
+            hover_color="#A00000",
+            text_color="white",
+            font=("Arial", 14, "bold"),
+            corner_radius=10,
+            width=120,
+            height=40,
+            command=self.on_reset_data,
+            state="disabled"
+        )
+        self.btn_reset.grid(row=1, column=3, padx=(30, 15), pady=15)
+        self.btn_reset.grid_remove()
+
         daftar_rombel = ["A1", "A2", "A3", "B1", "B2", "B3", "C1", "C2", "C3"]
         
         for index, rombel in enumerate(daftar_rombel):
             baris = index // 3
             kolom = index % 3
-            btn = ctk.CTkButton(self.grid_frame, text=rombel, fg_color=C["btn"], hover_color=C["btn_hover"], text_color=C["text"], font=("Arial", 32, "bold"), width=110, height=90, corner_radius=15, command=lambda r=rombel: self.fungsi_navigasi("nim-list", r))
+            btn = ctk.CTkButton(
+                self.grid_frame,
+                text=rombel,
+                fg_color=C["btn"],
+                hover_color=C["btn_hover"],
+                text_color=C["text"],
+                font=("Arial", 32, "bold"),
+                width=110,
+                height=90,
+                corner_radius=15,
+                command=lambda r=rombel: self.fungsi_navigasi("nim-list", r)
+            )
             btn.grid(row=baris, column=kolom, padx=15, pady=15)
 
-        self.btn_home = ctk.CTkButton(self.main_area, text="← HOME", fg_color=C["primary"], hover_color="#5a4c3e", text_color=C["white"], font=("Arial", 13, "bold"), corner_radius=40, width=90, height=35, command=lambda: self.fungsi_navigasi("welcome"))
+        self.btn_home = ctk.CTkButton(
+            self.main_area,
+            text="← HOME",
+            fg_color=C["primary"],
+            hover_color="#5a4c3e",
+            text_color=C["white"],
+            font=("Arial", 13, "bold"),
+            corner_radius=40,
+            width=90,
+            height=35,
+            command=lambda: self.fungsi_navigasi("welcome")
+        )
         self.btn_home.place(x=20, y=420)
+
+    def update_data(self, data_tambahan=None):
+        if getattr(self.master, 'is_master', False):
+            self.btn_reset.configure(state="normal")
+            self.btn_reset.grid()
+        else:
+            self.btn_reset.configure(state="disabled")
+            self.btn_reset.grid_remove()
+
+    def on_reset_data(self):
+        if not getattr(self.master, 'is_master', False):
+            messagebox.showerror("Akses Ditolak", "Hanya master yang dapat melakukan reset data.")
+            return
+
+        konfirmasi = messagebox.askyesno(
+            "Reset Semua Data Presensi",
+            "Yakin ingin menghapus semua data presensi dan log presensi di semua tanggal?"
+        )
+        if not konfirmasi:
+            return
+
+        berhasil, pesan = queries.reset_presensi_harian_and_logs(DB_PATH)
+        if berhasil:
+            messagebox.showinfo("Reset Data Presensi", pesan)
+        else:
+            messagebox.showerror("Reset Data Presensi", pesan)
 
 
 # =====================================================================

@@ -34,7 +34,7 @@ def menu_rombel(kelas, rombel):
             nama_pendek = (nama[:19] + '...') if len(nama) > 22 else nama
             str_datang = datang.title() if datang else "-"
             str_pulang = pulang.title() if pulang else "-"
-            print(f"{id_db:<5} | {no_absen:<2} | {nama:<22} | {status.upper():<6} | {str_datang:<12} | {str_pulang:<12}")
+            print(f"{id_db:<5} | {no_absen:<2} | {nama_pendek:<22} | {status.upper():<6} | {str_datang:<12} | {str_pulang:<12}")
             
         print("-" * 75)
         print("[1] Ubah Status Kehadiran")

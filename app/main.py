@@ -70,12 +70,12 @@ class MesinPresensiApp(ctk.CTk):
                 elif layar_tujuan.rombel_aktif:
                     rombel_target = layar_tujuan.rombel_aktif
                 else:
-                    rombel_target = "A1" 
-                    
+                    rombel_target = "A1"
                 layar_tujuan.update_data(rombel_target)
+            elif nama_halaman == "rombel-select":
+                layar_tujuan.update_data(data_tambahan)
             elif hasattr(layar_tujuan, 'update_data') and data_tambahan:
                 layar_tujuan.update_data(data_tambahan)
-                
             layar_tujuan.pack(fill="both", expand=True)
         else:
             print(f"[-] Halaman '{nama_halaman}' belum diimplementasikan.")

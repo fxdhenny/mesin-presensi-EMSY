@@ -214,3 +214,19 @@ def export_to_flashdisk(db_path, seluruh_tanggal=True, tanggal_awal=None, tangga
         
     except Exception as e:
         return False, f"Gagal Eksport: {str(e)}"
+
+
+def reset_presensi_harian_and_logs(db_path):
+    """
+    Menghapus seluruh data presensi harian dan semua log presensi di database.
+    """
+    try:
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM presensi_logs")
+        cursor.execute("DELETE FROM presensi_harian")
+        conn.commit()
+        conn.close()
+        return True, "Data presensi harian dan log presensi berhasil direset."
+    except sqlite3.Error as e:
+        return False, f"Gagal reset data: {e}"
