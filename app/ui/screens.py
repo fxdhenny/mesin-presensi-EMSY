@@ -286,7 +286,7 @@ class NimListScreen(ctk.CTkFrame):
 
 
 # =====================================================================
-# LAYAR 4: DATA MAHASISWA 
+# LAYAR 4: DATA MAHASISWA (VERSI FINAL - SEJAJAR & FLEKSIBEL 1-2 BARIS)
 # =====================================================================
 class StudentDetailScreen(ctk.CTkFrame):
     def __init__(self, master, fungsi_navigasi):
@@ -307,22 +307,52 @@ class StudentDetailScreen(ctk.CTkFrame):
         self.title_label = ctk.CTkLabel(self.top_frame, text="DATA MAHASISWA", text_color=C["primary"], font=("Arial", 45, "bold"), justify="left")
         self.title_label.pack(anchor="center", pady=(0, 20))
         
+        # Rumah Matriks Kotak Cokelat
         self.card_info = ctk.CTkFrame(self.left_frame, fg_color=C["btn"], corner_radius=15, height=250)
         self.card_info.pack(fill="x")
         self.card_info.pack_propagate(False)
         
-        self.label_nama = ctk.CTkLabel(self.card_info, text="Nama : ", text_color=C["white"], font=("Arial", 22, "bold"), wraplength=350, justify="left")
-        self.label_nama.pack(anchor="w", padx=20, pady=(40, 10))
+        # --- KOLOM 0: LABEL JUDUL (KIRI) ---
+        self.lbl_t_nama = ctk.CTkLabel(self.card_info, text="Nama", text_color=C["white"], font=("Arial", 22, "bold"))
+        self.lbl_t_nama.grid(row=0, column=0, padx=(25, 5), pady=(35, 6), sticky="w")
         
-        self.label_nim = ctk.CTkLabel(self.card_info, text="NIM    : ", text_color=C["white"], font=("Arial", 22, "bold"))
-        self.label_nim.pack(anchor="w", padx=20, pady=4)
+        self.lbl_t_nim = ctk.CTkLabel(self.card_info, text="NIM", text_color=C["white"], font=("Arial", 22, "bold"))
+        self.lbl_t_nim.grid(row=1, column=0, padx=(25, 5), pady=6, sticky="w")
         
-        self.label_kelas = ctk.CTkLabel(self.card_info, text="Kelas  : ", text_color=C["white"], font=("Arial", 22, "bold"))
-        self.label_kelas.pack(anchor="w", padx=20, pady=4)
+        self.lbl_t_kelas = ctk.CTkLabel(self.card_info, text="Kelas", text_color=C["white"], font=("Arial", 22, "bold"))
+        self.lbl_t_kelas.grid(row=2, column=0, padx=(25, 5), pady=6, sticky="w")
+        
+        self.lbl_t_status = ctk.CTkLabel(self.card_info, text="Status", text_color=C["white"], font=("Arial", 22, "bold"))
+        self.lbl_t_status.grid(row=3, column=0, padx=(25, 5), pady=6, sticky="w")
+        
+        # --- KOLOM 1: PENGUNCI TITIK DUA (TENGAH) ---
+        self.lbl_c_nama = ctk.CTkLabel(self.card_info, text=":", text_color=C["white"], font=("Arial", 22, "bold"))
+        self.lbl_c_nama.grid(row=0, column=1, padx=(0, 10), pady=(35, 6), sticky="w")
+        
+        self.lbl_c_nim = ctk.CTkLabel(self.card_info, text=":", text_color=C["white"], font=("Arial", 22, "bold"))
+        self.lbl_c_nim.grid(row=1, column=1, padx=(0, 10), pady=6, sticky="w")
+        
+        self.lbl_c_kelas = ctk.CTkLabel(self.card_info, text=":", text_color=C["white"], font=("Arial", 22, "bold"))
+        self.lbl_c_kelas.grid(row=2, column=1, padx=(0, 10), pady=6, sticky="w")
+        
+        self.lbl_c_status = ctk.CTkLabel(self.card_info, text=":", text_color=C["white"], font=("Arial", 22, "bold"))
+        self.lbl_c_status.grid(row=3, column=1, padx=(0, 10), pady=6, sticky="w")
+        
+        # --- KOLOM 2: NILAI DATA DINAMIS (KANAN) ---
+        # Diperlebar ke 350 piksel agar nama standar muat dalam 1 baris
+        self.label_nama = ctk.CTkLabel(self.card_info, text="", text_color=C["white"], font=("Arial", 22, "bold"), wraplength=350, justify="left")
+        self.label_nama.grid(row=0, column=2, padx=(0, 20), pady=(35, 6), sticky="w")
+        
+        self.label_nim = ctk.CTkLabel(self.card_info, text="", text_color=C["white"], font=("Arial", 22, "bold"))
+        self.label_nim.grid(row=1, column=2, padx=(0, 20), pady=6, sticky="w")
+        
+        self.label_kelas = ctk.CTkLabel(self.card_info, text="", text_color=C["white"], font=("Arial", 22, "bold"))
+        self.label_kelas.grid(row=2, column=2, padx=(0, 20), pady=6, sticky="w")
+        
+        self.label_status_info = ctk.CTkLabel(self.card_info, text="", text_color=C["white"], font=("Arial", 22, "bold"), wraplength=350, justify="left")
+        self.label_status_info.grid(row=3, column=2, padx=(0, 20), pady=6, sticky="w")
 
-        self.label_status_info = ctk.CTkLabel(self.card_info, text="Status  : ", text_color=C["white"], font=("Arial", 22, "bold"))
-        self.label_status_info.pack(anchor="w", padx=20, pady=4)
-
+        # Layout Tombol Bulat Presensi (Kanan)
         self.right_frame = ctk.CTkFrame(self.top_section, fg_color="transparent")
         self.right_frame.pack(side="right", fill="y", padx=(0, 0), pady=(0, 0))
         
@@ -345,6 +375,7 @@ class StudentDetailScreen(ctk.CTkFrame):
             btn_bulat.grid(row=baris, column=kolom, padx=8, pady=8)
             self.tombol_bulat_list.append(btn_bulat)
 
+        # Navigasi Bawah
         self.bottom_frame = ctk.CTkFrame(self, fg_color="transparent")
         self.bottom_frame.pack(side="bottom", fill="x", padx=40, pady=(0, 30))
         
@@ -386,16 +417,17 @@ class StudentDetailScreen(ctk.CTkFrame):
             if hasil:
                 nama, nim, kelas, status, datang, pulang = hasil
                 
-                self.label_nama.configure(text=f"Nama :  {nama}")
-                self.label_nim.configure(text=f"NIM    :  {nim}")
-                self.label_kelas.configure(text=f"Kelas  :  {kelas}")
+                # Memasukkan data murni langsung ke Kolom 2
+                self.label_nama.configure(text=nama)
+                self.label_nim.configure(text=nim)
+                self.label_kelas.configure(text=kelas)
                 
                 if status == "hadir":
                     str_datang = datang.title() if datang else "-"
                     str_pulang = pulang.title() if pulang else "-"
-                    teks_status = f"Status  :  Hadir ({str_datang} | {str_pulang})"
+                    teks_status = f"Hadir ({str_datang} | {str_pulang})"
                 else:
-                    teks_status = f"Status  :  {status.title()}"
+                    teks_status = status.title()
                     
                 self.label_status_info.configure(text=teks_status)
                 
@@ -797,7 +829,7 @@ class UpdatePopup(ctk.CTkToplevel):
 
 
 # =====================================================================
-# LAYAR POP-UP: UPDATE RFID DETECTOR WINDOW (VERSI BERSIH TANPA DOUBLE X)
+# LAYAR POP-UP: UPDATE RFID DETECTOR WINDOW (WITH COLLISION PROTECTION)
 # =====================================================================
 class UpdateRfidPopup(ctk.CTkToplevel):
     def __init__(self, master, rombel=None):
@@ -805,6 +837,11 @@ class UpdateRfidPopup(ctk.CTkToplevel):
         self.title("Update RFID")
         self.configure(fg_color="#fdfdfc") 
         self.rombel = rombel
+        
+        # Ekstraksi huruf kelas dan angka rombel (Contoh: "B2" -> kelas="B", rombel="2")
+        self.kelas_target = rombel[0] if rombel else ""
+        self.rombel_target = rombel[1:] if rombel else ""
+        
         ew, eh = 500, 300
         ex = self.master.winfo_rootx() + (self.master.winfo_width() // 2) - (ew // 2)
         ey = self.master.winfo_rooty() + (self.master.winfo_height() // 2) - (eh // 2)
@@ -812,19 +849,58 @@ class UpdateRfidPopup(ctk.CTkToplevel):
         self.resizable(False, False)
         
         self.transient(master)
-        self.wait_visibility() # Pengaman Linux Ubuntu
+        self.wait_visibility() 
         self.grab_set()
         
-        # --- TOMBOL CLOSE CUSTOM (X) SEBELUMNYA DI SINI TELAH DIHAPUS TOTAL ---
+        # Daftarkan pop-up ini ke jendela utama (main.py) agar main.py tahu 
+        # bahwa hasil scan rfid harus dilempar ke sini, bukan ke menu login.
+        # Hierarki: UpdateRfidPopup -> UpdateRfidScreen -> App (main.py)
+        if hasattr(self.master.master, 'pendaftar_popup_aktif'):
+            self.master.master.pendaftar_popup_aktif(self)
         
-        # --- KOTAK COKELAT TAMPILAN UTAMA ---
-        self.box_rfid = ctk.CTkFrame(self, width=340, height=100, fg_color="#b0957b", corner_radius=20)
-        self.box_rfid.place(relx=0.5, rely=0.55, anchor="center")
+        # --- KOTAK COKELAT TAMPILAN UTAMA (Responsif Luas Bagian Tengah) ---
+        self.box_rfid = ctk.CTkFrame(self, width=420, height=160, fg_color="#b0957b", corner_radius=20)
+        self.box_rfid.place(relx=0.5, rely=0.5, anchor="center")
         self.box_rfid.pack_propagate(False)
         
-        status_text = "Tempelkan RFID"
-        if self.rombel:
-            status_text = f"Tempelkan RFID untuk {self.rombel}"
-            
-        self.label_status = ctk.CTkLabel(self.box_rfid, text=status_text, text_color="white", font=("Arial", 24, "normal"))
+        status_text = f"Tempelkan RFID baru\nuntuk Rombel {self.rombel}"
+        self.label_status = ctk.CTkLabel(
+            self.box_rfid, text=status_text, 
+            text_color="white", font=("Arial", 18, "bold"), 
+            justify="center", wraplength=380
+        )
         self.label_status.place(relx=0.5, rely=0.5, anchor="center")
+        
+        # Pastikan jika jendela ditutup manual via Ubuntu X bar, ikatan listener dilepas
+        self.protocol("WM_DELETE_WINDOW", self.aksi_tutup_popup)
+
+    def terima_uid_scanned(self, uid_terbaca):
+        """
+        Fungsi gerbang pintu: Dipanggil otomatis oleh main.py ketika 
+        ada kartu yang menyentuh sensor saat pop-up ini terbuka.
+        """
+        # Lempar ke mesin generator pengaman database kita
+        sukses, kode, pesan = queries.ubah_rfid_rombel_aman(
+            DB_PATH, self.kelas_target, self.rombel_target, uid_terbaca
+        )
+        
+        if sukses:
+            # Jika berhasil diganti: Ubah kotak jadi Hijau Daun Industri
+            self.box_rfid.configure(fg_color="#1e4620")
+            self.label_status.configure(text=pesan, text_color="white")
+            # Berikan jeda 2.5 detik agar instruktur sempat membaca sukses sebelum pop-up menutup diri
+            self.after(2500, self.aksi_tutup_popup)
+        else:
+            # Jika gagal/bentrok: Ubah kotak jadi Merah Bata Peringatan
+            if kode == "REDUNDAN":
+                self.box_rfid.configure(fg_color="#cca010") # Kuning peringatan jika kartu itu-itu juga
+            else:
+                self.box_rfid.configure(fg_color="#7a2214") # Merah tegas jika dibajak rombel lain/master
+                
+            self.label_status.configure(text=pesan, text_color="white")
+
+    def aksi_tutup_popup(self):
+        # Lepaskan ikatan penerima data di main.py sebelum hancur
+        if hasattr(self.master.master, 'pendaftar_popup_aktif'):
+            self.master.master.pendaftar_popup_aktif(None)
+        self.destroy()

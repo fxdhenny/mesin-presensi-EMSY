@@ -322,3 +322,47 @@ def bersihkan_seluruh_data_lama(db_path):
     except Exception as e:
         print(f"[-] Gagal mengosongkan database: {e}")
         return False
+    
+# Tambahkan ini di bagian paling bawah app/database/queries.py
+
+def ubah_rfid_rombel_aman(db_path, target_kelas, target_rombel, uid_baru):
+    """
+    Mengubah UID RFID rombel dengan validasi bentrokan data (Collision Protection).
+    Return: (bool_sukses, kode_status, pesan_visual)
+    """
+    try:
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        
+        # 1. PERIKSA: Apakah UID ini sudah dipakai oleh entitas lain di database?
+        cursor.execute("SELECT role, kelas, rombel FROM rfid_cards WHERE rfid_uid = ?", (uid_baru,))
+        pemilik = cursor.fetchone()
+        
+        if pemilik:
+            role, kelas, rombel = pemilik
+            conn.close()
+            
+            # Kasus A: Mencoba mendaftarkan Kartu Master sebagai kartu rombel
+            if role == 1:
+                return False, "BENTROK_MASTER", "GAGAL!\n\nKartu ini adalah Kunci Master Instruktur.\nTidak boleh dialihkan menjadi kartu rombel!"
+            
+            # Kasus B: Kartu yang di-tap adalah kartu yang memang sedang terpasang di rombel itu
+            if kelas == target_kelas and str(rombel) == str(target_rombel):
+                return False, "REDUNDAN", f"INFO\n\nKartu ini sudah terdaftar sebagai kunci aktif Rombel {target_kelas}{target_rombel}."
+            
+            # Kasus C: Kartu sudah dikunci oleh rombel lain (Misal: Kartu B1 mau dipakai di C3)
+            return False, "BENTROK_LAIN", f"ACCES DENIED!\n\nKartu ini sudah digunakan oleh Rombel {kelas}{rombel}.\n\nGunakan kartu lain yang masih kosong!"
+            
+        # 2. EKSEKUSI: Jika lolos semua pemeriksaan, update UID di database
+        cursor.execute("""
+            UPDATE rfid_cards 
+            SET rfid_uid = ? 
+            WHERE kelas = ? AND rombel = ?
+        """, (uid_baru, target_kelas, target_rombel))
+        
+        conn.commit()
+        conn.close()
+        return True, "SUKSES", f"BERHASIL!\n\nKunci fisik Rombel {target_kelas}{target_rombel}\ntelah diperbarui ke kartu baru."
+
+    except Exception as e:
+        return False, "ERROR_SISTEM", f"Gangguan Database: {str(e)}"
