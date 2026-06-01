@@ -659,6 +659,9 @@ class ExportScreen(ctk.CTkFrame):
 # =====================================================================
 # POP-UP: KONFIRMASI UPDATE TOTAL (PENGGANTI RESET POPUP - FIX LINUX)
 # =====================================================================
+# =====================================================================
+# POP-UP: KONFIRMASI UPDATE TOTAL (VERSI BERSIH TANPA DOUBLE X)
+# =====================================================================
 class UpdatePopup(ctk.CTkToplevel):
     def __init__(self, master):
         super().__init__(master)
@@ -674,11 +677,10 @@ class UpdatePopup(ctk.CTkToplevel):
         self.transient(master)
         
         # ─── CRITICAL FIX UNTUK LINUX/UBUNTU ───
-        self.wait_visibility() # Menolak kunci grab sebelum jendela benar-benar dipetakan OS
+        self.wait_visibility() # Mencegah crash grab_set sebelum window siap di OS
         self.grab_set()
         
-        self.btn_close = ctk.CTkButton(self, text="×", font=("Arial", 28, "bold"), text_color="white", fg_color="#6c5b4b", hover_color="#5a4c3e", width=46, height=46, corner_radius=23, command=self.destroy)
-        self.btn_close.place(x=430, y=20)
+        # --- TOMBOL CLOSE CUSTOM (X) COKELAT SEBELUMNYA DI SINI TELAH DIHAPUS TOTAL ---
         
         self.frame_konfirmasi = ctk.CTkFrame(self, fg_color="transparent")
         self.frame_konfirmasi.place(relx=0.5, rely=0.55, anchor="center", relwidth=0.9, relheight=0.7)
@@ -715,14 +717,14 @@ class UpdatePopup(ctk.CTkToplevel):
         if not file_terpilih:
             return
 
-        # 1. Jalankan Auto-Backup otomatis menyeluruh
+        # 1. Jalankan Auto-Backup otomatis menyeluruh (Presensi + Logs)
         sukses_backup, pesan_backup = queries.ekspor_backup_otomatis_sebelum_ditimpa(DB_PATH, flashdisk_path)
         
         if not sukses_backup:
             self.tampilkan_pesan("Error Kritis", f"Proses dihentikan karena {pesan_backup}", "red")
             return
 
-        # 2. Bersihkan database lama (Wipe bertahap sesuai tata urutan kunci asing)
+        # 2. Bersihkan database lama (Wipe bertahap sesuai hierarki Foreign Key)
         queries.bersihkan_seluruh_data_lama(DB_PATH)
 
         # 3. Baca dan suntik data mahasiswa dari berkas Excel baru
@@ -735,14 +737,13 @@ class UpdatePopup(ctk.CTkToplevel):
             workbook = openpyxl.load_workbook(file_terpilih, data_only=True)
             sheet = workbook.active
             
-            # Ekstraksi header dokumen secara lowercase
             headers = [cell.value.strip().lower() if cell.value else f"col_{i}" for i, cell in enumerate(sheet[1])]
             
             for row in sheet.iter_rows(min_row=2, values_only=True):
                 row_dict = {headers[i]: str(value).strip() if value is not None else "" for i, value in enumerate(row)}
                 
                 nim = row_dict.get('nim', '')
-                nama = row_dict.get('nama mahasiswa', '')  # Pencucian kolom presisi sesuai foto header berkas Anda
+                nama = row_dict.get('nama mahasiswa', '') # Presisi mencari kolom sesuai foto berkas Anda
                 kelas = row_dict.get('kelas', '')
                 rombel = row_dict.get('rombel', '')
 
@@ -786,7 +787,7 @@ class UpdatePopup(ctk.CTkToplevel):
         msg_popup.resizable(False, False)
         
         msg_popup.transient(self.master)
-        msg_popup.wait_visibility() # Pengaman mutlak Linux Ubuntu pada nested popup
+        msg_popup.wait_visibility() # Pengaman Linux Ubuntu pada sub-popup pesan
         msg_popup.grab_set()
 
         lbl_msg = ctk.CTkLabel(msg_popup, text=pesan, font=("Arial", 13, "bold"), text_color=warna_teks, wraplength=360, justify="center")
@@ -796,7 +797,7 @@ class UpdatePopup(ctk.CTkToplevel):
 
 
 # =====================================================================
-# LAYAR POP-UP: UPDATE RFID DETECTOR WINDOW
+# LAYAR POP-UP: UPDATE RFID DETECTOR WINDOW (VERSI BERSIH TANPA DOUBLE X)
 # =====================================================================
 class UpdateRfidPopup(ctk.CTkToplevel):
     def __init__(self, master, rombel=None):
@@ -814,9 +815,9 @@ class UpdateRfidPopup(ctk.CTkToplevel):
         self.wait_visibility() # Pengaman Linux Ubuntu
         self.grab_set()
         
-        self.btn_close = ctk.CTkButton(self, text="×", font=("Arial", 28, "bold"), text_color="white", fg_color="#6c5b4b", hover_color="#5a4c3e", width=46, height=46, corner_radius=23, command=self.destroy)
-        self.btn_close.place(x=430, y=20)
+        # --- TOMBOL CLOSE CUSTOM (X) SEBELUMNYA DI SINI TELAH DIHAPUS TOTAL ---
         
+        # --- KOTAK COKELAT TAMPILAN UTAMA ---
         self.box_rfid = ctk.CTkFrame(self, width=340, height=100, fg_color="#b0957b", corner_radius=20)
         self.box_rfid.place(relx=0.5, rely=0.55, anchor="center")
         self.box_rfid.pack_propagate(False)
@@ -824,5 +825,6 @@ class UpdateRfidPopup(ctk.CTkToplevel):
         status_text = "Tempelkan RFID"
         if self.rombel:
             status_text = f"Tempelkan RFID untuk {self.rombel}"
+            
         self.label_status = ctk.CTkLabel(self.box_rfid, text=status_text, text_color="white", font=("Arial", 24, "normal"))
         self.label_status.place(relx=0.5, rely=0.5, anchor="center")
