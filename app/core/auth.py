@@ -1,3 +1,5 @@
+# app/core/auth.py
+
 import sqlite3
 import os
 

@@ -5,6 +5,7 @@ import sqlite3
 import platform
 import string
 import customtkinter as ctk
+from tkinter import filedialog
 from datetime import datetime
 
 # Konfigurasi jalur database (naik 3 tingkat dari folder ui)
@@ -143,17 +144,17 @@ class RombelSelectScreen(ctk.CTkFrame):
         )
         self.btn_export.grid(row=0, column=3, padx=(30, 15), pady=15)
         
-        # --- TOMBOL RESET (Ditempatkan di bawah EXPORT) ---
-        self.btn_reset = ctk.CTkButton(
-            self.grid_frame, text="RESET", 
+        # --- TOMBOL UPDATE DATA (Menggantikan Tombol Reset Lama) ---
+        self.btn_update = ctk.CTkButton(
+            self.grid_frame, text="UPDATE", 
             fg_color=C["primary"], hover_color="#5a4c3e", 
             text_color=C["text"], font=("Arial", 14, "bold"), 
             corner_radius=10, width=120, height=40, 
-            command=lambda: ResetPopup(self)  # <--- SEKARANG MEMANGGIL POP-UP BARU
+            command=lambda: UpdatePopup(self)
         )
-        self.btn_reset.grid(row=1, column=3, padx=(30, 15), pady=15)
+        self.btn_update.grid(row=1, column=3, padx=(30, 15), pady=15)
 
-        # --- TOMBOL UPDATE RFID (Ditempatkan di bawah RESET) ---
+        # --- TOMBOL UPDATE RFID ---
         self.btn_update_rfid = ctk.CTkButton(
             self.grid_frame, text="UPDATE RFID", 
             fg_color=C["primary"], hover_color="#5a4c3e", 
@@ -171,7 +172,6 @@ class RombelSelectScreen(ctk.CTkFrame):
             btn = ctk.CTkButton(self.grid_frame, text=rombel, fg_color=C["btn"], hover_color=C["btn_hover"], text_color=C["text"], font=("Arial", 32, "bold"), width=110, height=90, corner_radius=15, command=lambda r=rombel: self.fungsi_navigasi("nim-list", r))
             btn.grid(row=baris, column=kolom, padx=15, pady=15)
 
-        # --- MODIFIKASI TOMBOL HOME AGAR IDENTIK DENGAN HALAMAN DATA MAHASISWA ---
         self.btn_home = ctk.CTkButton(
             self.main_area, text="< BACK", 
             fg_color=C["primary"], hover_color="#5a4c3e", 
@@ -258,8 +258,6 @@ class NimListScreen(ctk.CTkFrame):
         self.rombel_aktif = string_rombel
         self.label_judul.configure(text=f'ROMBEL "{string_rombel}"')
         
-        # Tombol back kiri atas dihapus; hanya tombol bawah yang tersisa
-        
         kelas_mhs = string_rombel[0]
         rombel_mhs = string_rombel[1:]
         
@@ -272,7 +270,6 @@ class NimListScreen(ctk.CTkFrame):
         id_list_rombel = [baris[0] for baris in data_mhs]
         
         for index, baris in enumerate(data_mhs):
-            id_db = baris[0]
             nim_mahasiswa = baris[2]
             
             baris_grid = index // 3
@@ -415,7 +412,6 @@ class StudentDetailScreen(ctk.CTkFrame):
                         self.tombol_bulat_list[index].configure(fg_color=item["warna_aktif"])
                     else:
                         self.tombol_bulat_list[index].configure(fg_color=C["btn"])
-                        
         except Exception as e:
             print(f"[-] Gagal memuat data detail visual: {e}")
 
@@ -476,15 +472,12 @@ class ExportScreen(ctk.CTkFrame):
         self.main_container = ctk.CTkFrame(self, fg_color="transparent")
         self.main_container.pack(expand=True)
         
-        # --- JUDUL HALAMAN ---
         self.label_judul = ctk.CTkLabel(self.main_container, text="EKSPOR DATA PRESENSI", text_color=C["primary"], font=("Arial", 35, "bold"))
         self.label_judul.pack(pady=(0, 20))
 
-        # --- BARIS 1: CHECKBOX JENIS DATA (Kapsul) ---
         self.frame_jenis = ctk.CTkFrame(self.main_container, fg_color="transparent")
         self.frame_jenis.pack(pady=(0, 15))
 
-        # 1. Kapsul Presensi Harian
         self.btn_harian_bg = ctk.CTkFrame(self.frame_jenis, fg_color=C["primary"], width=230, height=45, corner_radius=15)
         self.btn_harian_bg.pack(side="left", padx=15)
         self.btn_harian_bg.pack_propagate(False)
@@ -500,7 +493,6 @@ class ExportScreen(ctk.CTkFrame):
         )
         self.check_harian.pack(side="right", padx=(0, 15))
 
-        # 2. Kapsul Log Presensi
         self.btn_log_bg = ctk.CTkFrame(self.frame_jenis, fg_color=C["primary"], width=230, height=45, corner_radius=15)
         self.btn_log_bg.pack(side="left", padx=15)
         self.btn_log_bg.pack_propagate(False)
@@ -516,7 +508,6 @@ class ExportScreen(ctk.CTkFrame):
         )
         self.check_log.pack(side="right", padx=(0, 15))
         
-        # --- BARIS 2: KOTAK UTAMA PEMILIHAN TANGGAL ---
         self.box_tanggal = ctk.CTkFrame(
             self.main_container, width=500, height=150,
             border_width=2, border_color=C["primary"], fg_color="transparent", corner_radius=15
@@ -527,10 +518,6 @@ class ExportScreen(ctk.CTkFrame):
         self.label_pilih = ctk.CTkLabel(self.box_tanggal, text="Pilih Tanggal :", text_color="black", font=("Arial", 20, "bold"))
         self.label_pilih.place(x=20, y=15)
 
-        # -----------------------------------------------------------------
-        # PERUBAHAN DISINI: Memisahkan Teks dan Kotak Checkbox Seluruh Tanggal
-        # Teks ditaruh di kiri, kotak dicentang digeser ke kanan
-        # -----------------------------------------------------------------
         self.label_semua_tgl = ctk.CTkLabel(
             self.box_tanggal, text="Seluruh tanggal", font=("Arial", 18, "bold"), text_color="black"
         )
@@ -543,10 +530,8 @@ class ExportScreen(ctk.CTkFrame):
             command=self.toggle_input_tanggal,
             fg_color=C["primary"], hover_color=C["btn_hover"], border_color=C["primary"]
         )
-        self.check_semua_tgl.place(x=445, y=17) # Sejajar di kanan pas dengan kapsul data di atas
-        # -----------------------------------------------------------------
+        self.check_semua_tgl.place(x=445, y=17) 
 
-        # Input Tanggal Awal
         self.label_awal = ctk.CTkLabel(self.box_tanggal, text="Awal", text_color="black", font=("Arial", 16, "bold"))
         self.label_awal.place(x=105, y=60)
         
@@ -557,7 +542,6 @@ class ExportScreen(ctk.CTkFrame):
         )
         self.entry_awal.place(x=60, y=90)
 
-        # Input Tanggal Akhir
         self.label_akhir = ctk.CTkLabel(self.box_tanggal, text="Akhir", text_color="black", font=("Arial", 16, "bold"))
         self.label_akhir.place(x=345, y=60)
         
@@ -568,7 +552,6 @@ class ExportScreen(ctk.CTkFrame):
         )
         self.entry_akhir.place(x=300, y=90)
 
-        # --- BARIS 3: TOMBOL NAVIGASI (BACK & EXPORT) ---
         self.frame_tombol = ctk.CTkFrame(self.main_container, fg_color="transparent", width=500, height=50)
         self.frame_tombol.pack(pady=(20, 0))
         self.frame_tombol.pack_propagate(False)
@@ -651,6 +634,7 @@ class ExportScreen(ctk.CTkFrame):
         msg_popup.resizable(False, False)
         
         msg_popup.transient(self)
+        msg_popup.wait_visibility() # Pengaman visual Linux Ubuntu
         msg_popup.grab_set()
         
         lbl_msg = ctk.CTkLabel(
@@ -670,174 +654,175 @@ class ExportScreen(ctk.CTkFrame):
             width=100, corner_radius=10, command=aksi_tutup
         )
         btn_ok.pack(pady=(0, 20))
-        
-class ResetPopup(ctk.CTkToplevel):
+
+
+# =====================================================================
+# POP-UP: KONFIRMASI UPDATE TOTAL (PENGGANTI RESET POPUP - FIX LINUX)
+# =====================================================================
+class UpdatePopup(ctk.CTkToplevel):
     def __init__(self, master):
         super().__init__(master)
-        self.title("Konfirmasi Reset")
-        self.configure(fg_color="#fdfdfc") # Background utama
+        self.title("Konfirmasi Pembaruan")
+        self.configure(fg_color="#fdfdfc")
         
-        # Mengatur ukuran pop-up dan posisi di tengah layar
-        ew, eh = 500, 300
+        ew, eh = 500, 320
         ex = self.master.winfo_rootx() + (self.master.winfo_width() // 2) - (ew // 2)
         ey = self.master.winfo_rooty() + (self.master.winfo_height() // 2) - (eh // 2)
         self.geometry(f"{ew}x{eh}+{ex}+{ey}")
         self.resizable(False, False)
         
-        # Mengunci layar utama di belakangnya
         self.transient(master)
+        
+        # ─── CRITICAL FIX UNTUK LINUX/UBUNTU ───
+        self.wait_visibility() # Menolak kunci grab sebelum jendela benar-benar dipetakan OS
         self.grab_set()
         
-        # --- TOMBOL CLOSE (X) UNTUK MENUTUP ---
-        self.btn_close = ctk.CTkButton(
-            self, text="×", font=("Arial", 28, "bold"),
-            text_color="white", fg_color="#6c5b4b", hover_color="#5a4c3e",
-            width=46, height=46, corner_radius=23,
-            command=self.destroy
-        )
+        self.btn_close = ctk.CTkButton(self, text="×", font=("Arial", 28, "bold"), text_color="white", fg_color="#6c5b4b", hover_color="#5a4c3e", width=46, height=46, corner_radius=23, command=self.destroy)
         self.btn_close.place(x=430, y=20)
         
-        # --- TAHAP 1: FRAME PERINGATAN KONFIRMASI ---
         self.frame_konfirmasi = ctk.CTkFrame(self, fg_color="transparent")
-        self.frame_konfirmasi.place(relx=0.5, rely=0.55, anchor="center", relwidth=0.9, relheight=0.6)
+        self.frame_konfirmasi.place(relx=0.5, rely=0.55, anchor="center", relwidth=0.9, relheight=0.7)
         
-        # Label teks pertanyaan
         self.label_tanya = ctk.CTkLabel(
-            self.frame_konfirmasi, text="Apakah anda yakin ingin mereset?", 
-            text_color="black", font=("Arial", 20, "bold")
+            self.frame_konfirmasi, 
+            text="Apakah Anda ingin memperbarui data?\n\n*Sistem akan otomatis mem-backup data lama\nke flashdisk sebelum menimpanya.", 
+            text_color="black", font=("Arial", 15, "bold"), justify="center"
         )
-        self.label_tanya.pack(pady=(10, 25))
+        self.label_tanya.pack(pady=(5, 20))
         
-        # Container tombol berdampingan
         self.frame_tombol_pilihan = ctk.CTkFrame(self.frame_konfirmasi, fg_color="transparent")
         self.frame_tombol_pilihan.pack()
         
-        # Tombol YA
-        self.btn_ya = ctk.CTkButton(
-            self.frame_tombol_pilihan, text="YA", font=("Arial", 16, "bold"),
-            text_color="white", fg_color="#6c5b4b", hover_color="#5a4c3e",
-            width=110, height=40, corner_radius=10,
-            command=self.on_ya
-        )
+        self.btn_ya = ctk.CTkButton(self.frame_tombol_pilihan, text="YA", font=("Arial", 16, "bold"), text_color="white", fg_color="#6c5b4b", hover_color="#5a4c3e", width=110, height=40, corner_radius=10, command=self.mulai_proses_update)
         self.btn_ya.pack(side="left", padx=15)
         
-        # Tombol TIDAK
-        self.btn_tidak = ctk.CTkButton(
-            self.frame_tombol_pilihan, text="TIDAK", font=("Arial", 16, "bold"),
-            text_color="white", fg_color="#b0957b", hover_color="#967e67",
-            width=110, height=40, corner_radius=10,
-            command=self.destroy # Jika TIDAK, langsung tutup pop-up
-        )
+        self.btn_tidak = ctk.CTkButton(self.frame_tombol_pilihan, text="TIDAK", font=("Arial", 16, "bold"), text_color="white", fg_color="#b0957b", hover_color="#967e67", width=110, height=40, corner_radius=10, command=self.destroy)
         self.btn_tidak.pack(side="left", padx=15)
 
-    def on_ya(self):
-        berhasil = self.reset_data()
-        self.frame_konfirmasi.destroy()
-        self.tampilkan_halaman_input_file()
-
-        if berhasil:
-            self.tampilkan_pesan("Sukses", "Semua data presensi harian dan log presensi telah dihapus.", "green")
-        else:
-            self.tampilkan_pesan("Gagal", "Terjadi kesalahan saat menghapus data presensi.", "red")
-
-    def reset_data(self):
-        return queries.hapus_semua_presensi(DB_PATH)
-
-    def tampilkan_halaman_input_file(self):
-        self.title("Reset Data")
+    def mulai_proses_update(self):
+        flashdisk_path = deteksi_path_flashdisk()
         
-        # --- TAHAP 2: KOTAK COKELAT "MASUKKAN FILE DISINI" ---
-        self.box_file = ctk.CTkFrame(
-            self, width=340, height=120, 
-            fg_color="#b0957b", corner_radius=20
+        if not flashdisk_path:
+            self.tampilkan_pesan("Proteksi Backup Gagal", "Flashdisk TIDAK terdeteksi!\n\nHarap colokkan USB Flashdisk ke Raspberry Pi untuk menampung arsip Auto-Backup sebelum memperbarui data mahasiswa.", "red")
+            return
+
+        file_terpilih = filedialog.askopenfilename(
+            initialdir=flashdisk_path,
+            title="Pilih Berkas Excel Mahasiswa Baru",
+            filetypes=[("Excel Workbook", "*.xlsx")]
         )
-        self.box_file.place(relx=0.5, rely=0.55, anchor="center")
-        self.box_file.pack_propagate(False)
         
-        # Teks di dalam kotak cokelat
-        self.label_file = ctk.CTkLabel(
-            self.box_file, text="Masukkan file disini :", 
-            text_color="white", font=("Arial", 18, "normal")
-        )
-        self.label_file.pack(anchor="w", padx=25, pady=(15, 5))
+        if not file_terpilih:
+            return
+
+        # 1. Jalankan Auto-Backup otomatis menyeluruh
+        sukses_backup, pesan_backup = queries.ekspor_backup_otomatis_sebelum_ditimpa(DB_PATH, flashdisk_path)
         
-        # Tombol tambah (+) murni pajangan visual
-        self.btn_add = ctk.CTkButton(
-            self.box_file, text="+", font=("Arial", 20, "bold"),
-            text_color="white", fg_color="#6c5b4b", hover_color="#5a4c3e",
-            width=36, height=36, corner_radius=18,
-            command=None
-        )
-        self.btn_add.pack(anchor="w", padx=25, pady=5)
+        if not sukses_backup:
+            self.tampilkan_pesan("Error Kritis", f"Proses dihentikan karena {pesan_backup}", "red")
+            return
+
+        # 2. Bersihkan database lama (Wipe bertahap sesuai tata urutan kunci asing)
+        queries.bersihkan_seluruh_data_lama(DB_PATH)
+
+        # 3. Baca dan suntik data mahasiswa dari berkas Excel baru
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        berhasil, gagal = 0, 0
+
+        try:
+            import openpyxl
+            workbook = openpyxl.load_workbook(file_terpilih, data_only=True)
+            sheet = workbook.active
+            
+            # Ekstraksi header dokumen secara lowercase
+            headers = [cell.value.strip().lower() if cell.value else f"col_{i}" for i, cell in enumerate(sheet[1])]
+            
+            for row in sheet.iter_rows(min_row=2, values_only=True):
+                row_dict = {headers[i]: str(value).strip() if value is not None else "" for i, value in enumerate(row)}
+                
+                nim = row_dict.get('nim', '')
+                nama = row_dict.get('nama mahasiswa', '')  # Pencucian kolom presisi sesuai foto header berkas Anda
+                kelas = row_dict.get('kelas', '')
+                rombel = row_dict.get('rombel', '')
+
+                if nim.endswith('.0'): nim = nim[:-2]
+                kelas = kelas.upper()
+                if len(kelas) > 1: kelas = kelas[0]
+                if rombel.endswith('.0'): rombel = rombel[:-2]
+
+                if not nim or not nama or not kelas or not rombel:
+                    gagal += 1
+                    continue
+
+                try:
+                    cursor.execute('''
+                        INSERT INTO mahasiswa (nim, nama, target_kelas, target_rombel)
+                        VALUES (?, ?, ?, ?)
+                    ''', (nim, nama, kelas, rombel))
+                    berhasil += 1
+                except sqlite3.IntegrityError:
+                    gagal += 1
+
+            conn.commit()
+            
+            pesan_final = f"{pesan_backup}\n\n=====================\n[+] UPDATE BERHASIL:\nTotal Sukses: {berhasil} Mahasiswa\nBaris Skip: {gagal}"
+            self.tampilkan_pesan("Pembaruan Sukses", pesan_final, "green")
+            self.destroy()
+
+        except Exception as e:
+            self.tampilkan_pesan("Error", f"Gagal membaca file: {str(e)}", "red")
+        finally:
+            conn.close()
 
     def tampilkan_pesan(self, judul, pesan, warna_teks):
         msg_popup = ctk.CTkToplevel(self.master)
         msg_popup.title(judul)
         msg_popup.configure(fg_color=C["bg"])
-        
-        ew, eh = 380, 160
+        ew, eh = 400, 220
         ex = self.master.winfo_rootx() + (self.master.winfo_width() // 2) - (ew // 2)
         ey = self.master.winfo_rooty() + (self.master.winfo_height() // 2) - (eh // 2)
         msg_popup.geometry(f"{ew}x{eh}+{ex}+{ey}")
         msg_popup.resizable(False, False)
+        
         msg_popup.transient(self.master)
+        msg_popup.wait_visibility() # Pengaman mutlak Linux Ubuntu pada nested popup
         msg_popup.grab_set()
 
-        lbl_msg = ctk.CTkLabel(
-            msg_popup, text=pesan,
-            font=("Arial", 16, "bold"), text_color=warna_teks,
-            wraplength=340, justify="center"
-        )
+        lbl_msg = ctk.CTkLabel(msg_popup, text=pesan, font=("Arial", 13, "bold"), text_color=warna_teks, wraplength=360, justify="center")
         lbl_msg.pack(expand=True, pady=(20, 10))
-
-        btn_ok = ctk.CTkButton(
-            msg_popup, text="OK", fg_color=C["primary"], hover_color=C["btn_hover"],
-            width=100, corner_radius=10, command=msg_popup.destroy
-        )
+        btn_ok = ctk.CTkButton(msg_popup, text="OK", fg_color=C["primary"], hover_color=C["btn_hover"], width=100, corner_radius=10, command=msg_popup.destroy)
         btn_ok.pack(pady=(0, 20))
-                
+
+
+# =====================================================================
+# LAYAR POP-UP: UPDATE RFID DETECTOR WINDOW
+# =====================================================================
 class UpdateRfidPopup(ctk.CTkToplevel):
     def __init__(self, master, rombel=None):
         super().__init__(master)
         self.title("Update RFID")
-        self.configure(fg_color="#fdfdfc") # Background utama
+        self.configure(fg_color="#fdfdfc") 
         self.rombel = rombel
-        
-        # Mengatur ukuran pop-up dan posisi di tengah layar
         ew, eh = 500, 300
         ex = self.master.winfo_rootx() + (self.master.winfo_width() // 2) - (ew // 2)
         ey = self.master.winfo_rooty() + (self.master.winfo_height() // 2) - (eh // 2)
         self.geometry(f"{ew}x{eh}+{ex}+{ey}")
         self.resizable(False, False)
         
-        # Mengunci layar utama di belakangnya
         self.transient(master)
+        self.wait_visibility() # Pengaman Linux Ubuntu
         self.grab_set()
         
-        # --- TOMBOL CLOSE (X) UNTUK MENUTUP ---
-        self.btn_close = ctk.CTkButton(
-            self, text="×", font=("Arial", 28, "bold"),
-            text_color="white", fg_color="#6c5b4b", hover_color="#5a4c3e",
-            width=46, height=46, corner_radius=23,
-            command=self.destroy
-        )
+        self.btn_close = ctk.CTkButton(self, text="×", font=("Arial", 28, "bold"), text_color="white", fg_color="#6c5b4b", hover_color="#5a4c3e", width=46, height=46, corner_radius=23, command=self.destroy)
         self.btn_close.place(x=430, y=20)
         
-        # --- KOTAK COKELAT TAMPILAN UTAMA ---
-        self.box_rfid = ctk.CTkFrame(
-            self, width=340, height=100, 
-            fg_color="#b0957b", corner_radius=20
-        )
+        self.box_rfid = ctk.CTkFrame(self, width=340, height=100, fg_color="#b0957b", corner_radius=20)
         self.box_rfid.place(relx=0.5, rely=0.55, anchor="center")
         self.box_rfid.pack_propagate(False)
         
-        # --- TEKS "Tempelkan RFID" (Hanya tampilan biasa, bukan tombol) ---
         status_text = "Tempelkan RFID"
         if self.rombel:
             status_text = f"Tempelkan RFID untuk {self.rombel}"
-
-        self.label_status = ctk.CTkLabel(
-            self.box_rfid, text=status_text, 
-            text_color="white", font=("Arial", 24, "normal")
-        )
+        self.label_status = ctk.CTkLabel(self.box_rfid, text=status_text, text_color="white", font=("Arial", 24, "normal"))
         self.label_status.place(relx=0.5, rely=0.5, anchor="center")

@@ -1,3 +1,5 @@
+# scripts/input_data_rfidcards.py
+
 import sqlite3
 import os
 

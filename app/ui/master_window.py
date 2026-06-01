@@ -39,6 +39,7 @@ class RombelSelectScreen(ctk.CTkFrame):
         super().__init__(master, fg_color=C["bg"])
         self.fungsi_navigasi = fungsi_navigasi
 
+        # Sidebar Kiri
         self.sidebar = ctk.CTkFrame(self, width=120, fg_color=C["primary"], corner_radius=0)
         self.sidebar.pack(side="left", fill="y")
         self.sidebar.pack_propagate(False)
@@ -46,48 +47,61 @@ class RombelSelectScreen(ctk.CTkFrame):
         self.label_sidebar = ctk.CTkLabel(self.sidebar, text="R\nO\nM\nB\nE\nL", text_color=C["text"], font=("Arial", 40, "bold"))
         self.label_sidebar.pack(expand=True)
 
+        # Main Area
         self.main_area = ctk.CTkFrame(self, fg_color="transparent")
         self.main_area.pack(side="left", fill="both", expand=True)
 
+        # Label Judul Menu Utama
+        self.lbl_judul_main = ctk.CTkLabel(self.main_area, text="DASHBOARD KENDALI MASTER", text_color=C["primary"], font=("Arial", 26, "bold"))
+        self.lbl_judul_main.pack(anchor="w", padx=40, pady=(40, 10))
+
+        # Grid Area Konten Tombol
         self.grid_frame = ctk.CTkFrame(self.main_area, fg_color="transparent")
-        self.grid_frame.pack(expand=True, pady=(10, 50))
+        self.grid_frame.pack(expand=True, pady=(10, 60))
         
+        # --- PANEL TOMBOL KENDALI MASTER (KOLOM KANAN) ---
+        
+        # 1. Tombol EXPORT MANUAL
         self.btn_export = ctk.CTkButton(
             self.grid_frame, text="EXPORT", 
             fg_color=C["primary"], hover_color="#5a4c3e", 
             text_color=C["text"], font=("Arial", 14, "bold"), 
-            corner_radius=10, width=120, height=40, 
+            corner_radius=10, width=130, height=40, 
             command=lambda: self.fungsi_navigasi("export-screen")
         )
-        self.btn_export.grid(row=0, column=3, padx=(30, 15), pady=10)
+        self.btn_export.grid(row=0, column=3, padx=(40, 15), pady=10)
         
+        # 2. Tombol IMPORT MHS
         self.btn_import = ctk.CTkButton(
             self.grid_frame, text="IMPORT MHS", 
             fg_color=C["primary"], hover_color="#5a4c3e", 
             text_color=C["text"], font=("Arial", 14, "bold"), 
-            corner_radius=10, width=120, height=40, 
+            corner_radius=10, width=130, height=40, 
             command=self.pic_berkas_mahasiswa
         )
-        self.btn_import.grid(row=1, column=3, padx=(30, 15), pady=10)
+        self.btn_import.grid(row=1, column=3, padx=(40, 15), pady=10)
         
-        self.btn_reset = ctk.CTkButton(
-            self.grid_frame, text="RESET", 
+        # 3. TOMBOL UPDATE DATA (Ganti dari RESET menjadi UPDATE)
+        self.btn_update = ctk.CTkButton(
+            self.grid_frame, text="UPDATE", 
             fg_color=C["primary"], hover_color="#5a4c3e", 
             text_color=C["text"], font=("Arial", 14, "bold"), 
-            corner_radius=10, width=120, height=40, 
-            command=lambda: ResetPopup(self)
+            corner_radius=10, width=130, height=40, 
+            command=lambda: UpdatePopup(self)  # Memanggil pop-up konfirmasi update baru
         )
-        self.btn_reset.grid(row=2, column=3, padx=(30, 15), pady=10)
+        self.btn_update.grid(row=2, column=3, padx=(40, 15), pady=10)
 
+        # 4. Tombol UPDATE RFID
         self.btn_update_rfid = ctk.CTkButton(
             self.grid_frame, text="UPDATE RFID", 
             fg_color=C["primary"], hover_color="#5a4c3e", 
             text_color=C["text"], font=("Arial", 14, "bold"), 
-            corner_radius=10, width=120, height=40, 
+            corner_radius=10, width=130, height=40, 
             command=lambda: self.fungsi_navigasi("update-rfid")
         )
-        self.btn_update_rfid.grid(row=3, column=3, padx=(30, 15), pady=10)
+        self.btn_update_rfid.grid(row=3, column=3, padx=(40, 15), pady=10)
 
+        # GRID TOMBOL PILIHAN ROMBEL FISIK LAB (A1 - C3)
         daftar_rombel = ["A1", "A2", "A3", "B1", "B2", "B3", "C1", "C2", "C3"]
         for index, rombel in enumerate(daftar_rombel):
             baris = index // 3
@@ -102,99 +116,25 @@ class RombelSelectScreen(ctk.CTkFrame):
             corner_radius=25, width=140, height=50, 
             command=lambda: self.fungsi_navigasi("welcome")
         )
-        self.btn_home.place(x=40, y=400)
+        self.btn_home.place(x=40, y=410)
 
     def pic_berkas_mahasiswa(self):
-        jalur_awal = deteksi_path_flashdisk()
-        if not jalur_awal:
-            jalur_awal = os.path.expanduser("~")
-
+        """Fungsi pembantu pencari berkas standar"""
+        flashdisk_path = deteksi_path_flashdisk()
+        if not flashdisk_path:
+            flashdisk_path = os.path.expanduser("~")
         file_terpilih = filedialog.askopenfilename(
-            initialdir=jalur_awal,
-            title="Pilih Berkas Data Mahasiswa",
-            filetypes=[("Excel atau CSV", "*.xlsx *.csv"), ("Excel Workbook", "*.xlsx"), ("CSV Berkas", "*.csv")]
+            initialdir=flashdisk_path,
+            title="Pilih Berkas Excel Mahasiswa",
+            filetypes=[("Excel atau CSV", "*.xlsx *.csv")]
         )
-        
-        if file_terpilih:
-            self.eksekusi_import_logika(file_terpilih)
-
-    def eksekusi_import_logika(self, file_path):
-        conn = sqlite3.connect(DB_PATH)
-        cursor = conn.cursor()
-        
-        cursor.execute("SELECT nilai FROM pengaturan WHERE kunci = 'current_batch'")
-        res_batch = cursor.fetchone()
-        angkatan_aktif = res_batch[0] if res_batch else "ATMI"
-
-        berhasil, gagal = 0, 0
-        ekstensi = os.path.splitext(file_path)[1].lower()
-        data_baris = []
-
-        try:
-            if ekstensi == '.csv':
-                with open(file_path, mode='r', encoding='utf-8') as file:
-                    csv_reader = csv.DictReader(file)
-                    for row in csv_reader:
-                        data_baris.append(row)
-            elif ekstensi == '.xlsx':
-                import openpyxl
-                workbook = openpyxl.load_workbook(file_path, data_only=True)
-                sheet = workbook.active
-                headers = [cell.value.strip().lower() if cell.value else f"col_{i}" for i, cell in enumerate(sheet[1])]
-                for row in sheet.iter_rows(min_row=2, values_only=True):
-                    row_dict = {headers[i]: str(value).strip() if value is not None else "" for i, value in enumerate(row)}
-                    data_baris.append(row_dict)
-
-            # Injeksi baris data ke database (Diperbarui dengan Try-Except Execute)
-            for row in data_baris:
-                nim = row.get('nim', '')
-                # Cerdas mencari 'nama mahasiswa', 'nama lengkap', atau 'nama'
-                nama = row.get('nama mahasiswa', row.get('nama lengkap', row.get('nama', '')))
-                kelas = row.get('kelas', '')
-                rombel = row.get('rombel', '')
-
-                # Normalisasi: pastikan tipe string, hapus trailing ".0" dari angka
-                nim = str(nim).strip()
-                if nim.endswith('.0'):
-                    nim = nim[:-2]
-
-                nama = str(nama).strip()
-
-                kelas = str(kelas).strip().upper()
-                if len(kelas) > 1:
-                    kelas = kelas[0]
-
-                rombel = str(rombel).strip()
-                if rombel.endswith('.0'):
-                    rombel = rombel[:-2]
-
-                if not nim or not nama or not kelas or not rombel:
-                    gagal += 1
-                    continue
-
-                try:
-                    cursor.execute('''
-                        INSERT INTO mahasiswa (nim, nama, angkatan, target_kelas, target_rombel)
-                        VALUES (?, ?, ?, ?, ?)
-                    ''', (nim, nama, angkatan_aktif, kelas, rombel))
-                    berhasil += 1
-                except sqlite3.IntegrityError:
-                    gagal += 1 # Menangani mahasiswa yang duplikat di angkatan sama
-
-            conn.commit()
-            pesan_hasil = f"Sukses mengimport data!\n\nTotal: {berhasil+gagal}\nBerhasil: {berhasil}\nGagal/Duplikat: {gagal}"
-            self.tampilkan_popup_pesan("Hasil Import", pesan_hasil, "green")
-
-        except Exception as e:
-            self.tampilkan_popup_pesan("Error", f"Gagal membaca file:\n{str(e)}", "red")
-        finally:
-            conn.close()
+        return file_terpilih
 
     def tampilkan_popup_pesan(self, judul, pesan, warna):
         msg_popup = ctk.CTkToplevel(self)
         msg_popup.title(judul)
         msg_popup.configure(fg_color=C["bg"])
-        ew, eh = 400, 200
+        ew, eh = 420, 240
         ex = self.winfo_rootx() + (self.winfo_width() // 2) - (ew // 2)
         ey = self.winfo_rooty() + (self.winfo_height() // 2) - (eh // 2)
         msg_popup.geometry(f"{ew}x{eh}+{ex}+{ey}")
@@ -202,7 +142,7 @@ class RombelSelectScreen(ctk.CTkFrame):
         msg_popup.transient(self)
         msg_popup.grab_set()
 
-        lbl = ctk.CTkLabel(msg_popup, text=pesan, font=("Arial", 16, "bold"), text_color=warna, justify="center")
+        lbl = ctk.CTkLabel(msg_popup, text=pesan, font=("Arial", 14, "bold"), text_color=warna, justify="center", wraplength=380)
         lbl.pack(expand=True, pady=10)
         btn = ctk.CTkButton(msg_popup, text="OK", fg_color=C["primary"], width=100, command=msg_popup.destroy)
         btn.pack(pady=(0, 20))
@@ -429,14 +369,17 @@ class ExportScreen(ctk.CTkFrame):
 
         btn_ok = ctk.CTkButton(msg_popup, text="OK", fg_color=C["primary"], hover_color=C["btn_hover"], width=100, corner_radius=10, command=aksi_tutup)
         btn_ok.pack(pady=(0, 20))
-        
-class ResetPopup(ctk.CTkToplevel):
+
+# =====================================================================
+# POP-UP BARU: KONFIRMASI UPDATE TOTAL (PENGGANTI RESET POPUP)
+# =====================================================================
+class UpdatePopup(ctk.CTkToplevel):
     def __init__(self, master):
         super().__init__(master)
-        self.title("Konfirmasi Reset")
+        self.title("Konfirmasi Pembaruan")
         self.configure(fg_color="#fdfdfc")
         
-        ew, eh = 500, 300
+        ew, eh = 500, 320
         ex = self.master.winfo_rootx() + (self.master.winfo_width() // 2) - (ew // 2)
         ey = self.master.winfo_rooty() + (self.master.winfo_height() // 2) - (eh // 2)
         self.geometry(f"{ew}x{eh}+{ex}+{ey}")
@@ -448,47 +391,109 @@ class ResetPopup(ctk.CTkToplevel):
         self.btn_close.place(x=430, y=20)
         
         self.frame_konfirmasi = ctk.CTkFrame(self, fg_color="transparent")
-        self.frame_konfirmasi.place(relx=0.5, rely=0.55, anchor="center", relwidth=0.9, relheight=0.6)
+        self.frame_konfirmasi.place(relx=0.5, rely=0.55, anchor="center", relwidth=0.9, relheight=0.7)
         
-        self.label_tanya = ctk.CTkLabel(self.frame_konfirmasi, text="Apakah anda yakin ingin mereset?", text_color="black", font=("Arial", 20, "bold"))
-        self.label_tanya.pack(pady=(10, 25))
+        self.label_tanya = ctk.CTkLabel(
+            self.frame_konfirmasi, 
+            text="Apakah Anda ingin memperbarui data?\n\n*Sistem akan otomatis mem-backup data lama\nke flashdisk sebelum menimpanya.", 
+            text_color="black", font=("Arial", 15, "bold"), justify="center"
+        )
+        self.label_tanya.pack(pady=(5, 20))
         
         self.frame_tombol_pilihan = ctk.CTkFrame(self.frame_konfirmasi, fg_color="transparent")
         self.frame_tombol_pilihan.pack()
         
-        self.btn_ya = ctk.CTkButton(self.frame_tombol_pilihan, text="YA", font=("Arial", 16, "bold"), text_color="white", fg_color="#6c5b4b", hover_color="#5a4c3e", width=110, height=40, corner_radius=10, command=self.on_ya)
+        self.btn_ya = ctk.CTkButton(self.frame_tombol_pilihan, text="YA", font=("Arial", 16, "bold"), text_color="white", fg_color="#6c5b4b", hover_color="#5a4c3e", width=110, height=40, corner_radius=10, command=self.mulai_proses_update)
         self.btn_ya.pack(side="left", padx=15)
         
         self.btn_tidak = ctk.CTkButton(self.frame_tombol_pilihan, text="TIDAK", font=("Arial", 16, "bold"), text_color="white", fg_color="#b0957b", hover_color="#967e67", width=110, height=40, corner_radius=10, command=self.destroy)
         self.btn_tidak.pack(side="left", padx=15)
 
-    def on_ya(self):
-        berhasil = self.reset_data()
-        self.frame_konfirmasi.destroy()
-        self.tampilkan_halaman_input_file()
-        if berhasil:
-            self.tampilkan_pesan("Sukses", "Semua data presensi harian dan log presensi telah dihapus.", "green")
-        else:
-            self.tampilkan_pesan("Gagal", "Terjadi kesalahan saat menghapus data presensi.", "red")
+    def mulai_proses_update(self):
+        """Menjalankan alur: Cek USB -> Pilih Excel -> Backup -> Overwrite"""
+        flashdisk_path = deteksi_path_flashdisk()
+        
+        if not flashdisk_path:
+            self.tampilkan_pesan("Proteksi Backup Gagal", "Flashdisk TIDAK terdeteksi!\n\nHarap colokkan USB Flashdisk ke Raspberry Pi untuk menampung arsip Auto-Backup sebelum memperbarui data mahasiswa.", "red")
+            return
 
-    def reset_data(self):
-        return queries.hapus_semua_presensi(DB_PATH)
+        # Buka penjelajah berkas
+        file_terpilih = filedialog.askopenfilename(
+            initialdir=flashdisk_path,
+            title="Pilih Berkas Excel Mahasiswa Baru",
+            filetypes=[("Excel Workbook", "*.xlsx")]
+        )
+        
+        if not file_terpilih:
+            return
 
-    def tampilkan_halaman_input_file(self):
-        self.title("Reset Data")
-        self.box_file = ctk.CTkFrame(self, width=340, height=120, fg_color="#b0957b", corner_radius=20)
-        self.box_file.place(relx=0.5, rely=0.55, anchor="center")
-        self.box_file.pack_propagate(False)
-        self.label_file = ctk.CTkLabel(self.box_file, text="Masukkan file disini :", text_color="white", font=("Arial", 18, "normal"))
-        self.label_file.pack(anchor="w", padx=25, pady=(15, 5))
-        self.btn_add = ctk.CTkButton(self.box_file, text="+", font=("Arial", 20, "bold"), text_color="white", fg_color="#6c5b4b", hover_color="#5a4c3e", width=36, height=36, corner_radius=18, command=None)
-        self.btn_add.pack(anchor="w", padx=25, pady=5)
+        # 1. Jalankan Auto-Backup
+        sukses_backup, pesan_backup = queries.ekspor_backup_otomatis_sebelum_ditimpa(DB_PATH, flashdisk_path)
+        
+        if not sukses_backup:
+            self.tampilkan_pesan("Error Kritis", f"Proses dihentikan karena {pesan_backup}", "red")
+            return
+
+        # 2. Bersihkan database lama (Wipe)
+        queries.bersihkan_seluruh_data_lama(DB_PATH)
+
+        # 3. Baca dan suntik data mahasiswa dari file baru
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        berhasil, gagal = 0, 0
+
+        try:
+            import openpyxl
+            workbook = openpyxl.load_workbook(file_terpilih, data_only=True)
+            sheet = workbook.active
+            
+            # Ekstraksi header secara lowercase
+            headers = [cell.value.strip().lower() if cell.value else f"col_{i}" for i, cell in enumerate(sheet[1])]
+            
+            for row in sheet.iter_rows(min_row=2, values_only=True):
+                row_dict = {headers[i]: str(value).strip() if value is not None else "" for i, value in enumerate(row)}
+                
+                # Pemetaan kolom presisi sesuai FOTO HEDER EXCEL USER
+                nim = row_dict.get('nim', '')
+                nama = row_dict.get('nama mahasiswa', '')  # Sesuai teks "Nama Mahasiswa" di foto
+                kelas = row_dict.get('kelas', '')
+                rombel = row_dict.get('rombel', '')
+
+                if nim.endswith('.0'): nim = nim[:-2]
+                kelas = kelas.upper()
+                if len(kelas) > 1: kelas = kelas[0]
+                if rombel.endswith('.0'): rombel = rombel[:-2]
+
+                if not nim or not nama or not kelas or not rombel:
+                    gagal += 1
+                    continue
+
+                try:
+                    cursor.execute('''
+                        INSERT INTO mahasiswa (nim, nama, target_kelas, target_rombel)
+                        VALUES (?, ?, ?, ?)
+                    ''', (nim, nama, kelas, rombel))
+                    berhasil += 1
+                except sqlite3.IntegrityError:
+                    gagal += 1
+
+            conn.commit()
+            
+            pesan_final = f"{pesan_backup}\n\n=====================\n[+] UPDATE BERHASIL:\nTotal Sukses: {berhasil} Mahasiswa\nBaris Skip: {gagal}"
+            self.tampilkan_pesan("Pembaruan Sukses", pesan_final, "green")
+            self.frame_konfirmasi.destroy()
+            self.destroy()
+
+        except Exception as e:
+            self.tampilkan_pesan("Error", f"Gagal membaca file: {str(e)}", "red")
+        finally:
+            conn.close()
 
     def tampilkan_pesan(self, judul, pesan, warna_teks):
         msg_popup = ctk.CTkToplevel(self.master)
         msg_popup.title(judul)
         msg_popup.configure(fg_color=C["bg"])
-        ew, eh = 380, 160
+        ew, eh = 400, 220
         ex = self.master.winfo_rootx() + (self.master.winfo_width() // 2) - (ew // 2)
         ey = self.master.winfo_rooty() + (self.master.winfo_height() // 2) - (eh // 2)
         msg_popup.geometry(f"{ew}x{eh}+{ex}+{ey}")
@@ -496,7 +501,7 @@ class ResetPopup(ctk.CTkToplevel):
         msg_popup.transient(self.master)
         msg_popup.grab_set()
 
-        lbl_msg = ctk.CTkLabel(msg_popup, text=pesan, font=("Arial", 16, "bold"), text_color=warna_teks, wraplength=340, justify="center")
+        lbl_msg = ctk.CTkLabel(msg_popup, text=pesan, font=("Arial", 13, "bold"), text_color=warna_teks, wraplength=360, justify="center")
         lbl_msg.pack(expand=True, pady=(20, 10))
         btn_ok = ctk.CTkButton(msg_popup, text="OK", fg_color=C["primary"], hover_color=C["btn_hover"], width=100, corner_radius=10, command=msg_popup.destroy)
         btn_ok.pack(pady=(0, 20))
