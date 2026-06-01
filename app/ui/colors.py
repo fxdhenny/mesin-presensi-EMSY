@@ -1,15 +1,15 @@
 # app/ui/colors.py
 
-# Palet warna spesifik EMSY dari desain teman Anda
+# =====================================================================
+# KONFIGURASI WARNA (Update Terbaru EMSY)
+# =====================================================================
 C = {
-    "bg": "#f5ede0",      # Krem latar utama
-    "cream": "#f0e6d3",   # Krem panel/badge
-    "tan": "#b8987a",     # Coklat muda (tombol, bar)
-    "tanLight": "#c9ab8e", # Coklat muda saat hover
-    "tanDark": "#a0825f",  # Coklat tua untuk teks kedua
-    "dark": "#5a3e2b",     # Coklat gelap (WELCOME besar, sidebar)
-    "darker": "#3d2b1f",   # Coklat paling gelap (kotak scan, tombol master)
-    "white": "#ffffff",    # Putih untuk teks tombol
-    "text": "#3d2b1f"      # Warna teks standar
+    "bg": "#fdfdfc",             # Background utama (Krem terang)
+    "primary": "#6c5b4b",        # Cokelat Tua (Sidebar, Header, Tombol Master)
+    "btn": "#b0957b",            # Cokelat Muda (Tombol Standar)
+    "btn_hover": "#967e67",      # Hover tombol (Warna saat ditekan/disorot)
+    "text": "white",             # Teks putih standar
+    "text_dark": "#6E5A4E",      # Teks gelap untuk tulisan WELCOME
+    "top_bar": "#B99B7E",        # Header bar di Welcome Screen
+    "white": "white"             # Putih absolut
 }
-

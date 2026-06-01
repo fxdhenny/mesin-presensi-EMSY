@@ -22,8 +22,11 @@ from app.database import queries
 DB_PATH = os.path.join(BASE_DIR, 'data', 'attendance.db')
 
 from ui.colors import C
-# Menambahkan UpdateRfidScreen dan ExportScreen ke dalam import
-from ui.screens import WelcomeScreen, RombelSelectScreen, UpdateRfidScreen, NimListScreen, StudentDetailScreen, ExportScreen
+
+# --- IMPORT UI YANG SUDAH DIPISAH (REFACTORING) ---
+from ui.login_window import WelcomeScreen
+from ui.master_window import RombelSelectScreen, UpdateRfidScreen, ExportScreen
+from ui.user_window import NimListScreen, StudentDetailScreen
 
 class MesinPresensiApp(ctk.CTk):
     def __init__(self):
@@ -36,17 +39,18 @@ class MesinPresensiApp(ctk.CTk):
         self.is_master = False
         self.rfid_queue = queue.Queue()
         self.sensor = RFIDReader()
-        
+    
+        # Threading untuk mencegah GUI freeze saat menunggu sensor RFID
         self.thread_sensor = threading.Thread(target=self.tugas_satpam_rfid, daemon=True)
         self.thread_sensor.start()
 
         self.frames = {}
+        # Mengisi dictionary frame dengan kelas dari file yang sudah dipecah
         self.frames["welcome"] = WelcomeScreen(self, self.pindah_halaman)
         self.frames["rombel-select"] = RombelSelectScreen(self, self.pindah_halaman)
         self.frames["update-rfid"] = UpdateRfidScreen(self, self.pindah_halaman)
         self.frames["nim-list"] = NimListScreen(self, self.pindah_halaman)
         self.frames["student-detail"] = StudentDetailScreen(self, self.pindah_halaman)
-        # Mendaftarkan halaman ExportScreen
         self.frames["export-screen"] = ExportScreen(self, self.pindah_halaman)
 
         self.tampilkan_halaman("welcome")
