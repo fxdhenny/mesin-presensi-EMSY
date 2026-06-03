@@ -4,8 +4,7 @@ echo "=========================================="
 echo "    MEMULAI SISTEM PRESENSI EMSY...       "
 echo "=========================================="
 
-# 1. Pindah ke direktori tempat script ini berada (Root Proyek)
-# Ini mencegah error jika Anda memanggil script dari direktori lain
+# 1. Pindah ke direktori tempat script ini berada
 cd "$(dirname "$0")"
 
 # 2. Periksa apakah folder Virtual Environment (venv) sudah ada
@@ -22,12 +21,14 @@ fi
 echo "[*] Mengaktifkan Virtual Environment..."
 source venv/bin/activate
 
-# 4. Instal pustaka yang dibutuhkan (pip akan otomatis mendeteksi jika sudah terinstal)
+# 4. Instal pustaka yang dibutuhkan 
 echo "[*] Memeriksa dan memperbarui pustaka Python..."
-pip install --upgrade pip  # Memastikan pip versi terbaru
-pip install customtkinter openpyxl
+pip install --upgrade pip
 
-# (Opsional: Jika Anda memakai pustaka RFID tambahan seperti mfrc522 atau pyserial, tambahkan di atas)
+# =========================================================
+# PERUBAHAN DI SINI: Menambahkan mfrc522 dan spidev
+# =========================================================
+pip install customtkinter openpyxl mfrc522 spidev
 
 # 5. Jalankan aplikasi utama
 echo "=========================================="
@@ -35,5 +36,5 @@ echo "[+] Menjalankan app/main.py..."
 echo "=========================================="
 python3 app/main.py
 
-# 6. Nonaktifkan venv setelah aplikasi ditutup
+# 6. Nonaktifkan venv setelah aplikasi GUI ditutup (tanda X ditekan)
 deactivate
