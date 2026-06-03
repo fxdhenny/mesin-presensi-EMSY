@@ -15,7 +15,8 @@ from core.rfid_service import RFIDReader
 from core.auth import verifikasi_kartu
 from ui.screens import (
     WelcomeScreen, RombelSelectScreen, UpdateRfidScreen,
-    NimListScreen, StudentDetailScreen, ExportScreen
+    NimListScreen, StudentDetailScreen, ExportScreen,
+    MasterLoginPopup
 )
 
 class App(ctk.CTk):
@@ -32,6 +33,9 @@ class App(ctk.CTk):
         
         # --- INISIALISASI VARIABEL LOGIKA & ARSITEKTUR ---
         self.is_master = False          
+        self.password_file = os.path.join(BASE_DIR, '..', 'data', 'master_password.txt')
+        self.master_password = self.load_master_password()
+        self.login_popup = None
         self.popup_aktif = None         
         self.antrean_rfid = queue.Queue() 
         self.reader = RFIDReader()      
@@ -127,6 +131,43 @@ class App(ctk.CTk):
             if welcome_frame:
                 welcome_frame.ubah_status_scan(respons["pesan"], "#7a2214")
                 self.after(3000, welcome_frame.reset_status_scan)
+
+    # =====================================================================
+    # POP-UP LOGIN MASTER DARI TOMBOL 'M' DI LAYAR AWAL
+    # =====================================================================
+    def buka_popup_login_master(self):
+        if self.login_popup and self.login_popup.winfo_exists():
+            self.login_popup.lift()
+            return
+        self.login_popup = MasterLoginPopup(self)
+        self.login_popup.grab_set()
+
+    def validate_master_password(self, password):
+        return password == self.master_password
+
+    def set_master_password(self, new_password):
+        self.master_password = new_password
+        try:
+            with open(self.password_file, 'w', encoding='utf-8') as f:
+                f.write(new_password)
+        except Exception as e:
+            print(f"[-] Gagal menyimpan password master: {e}")
+
+    def load_master_password(self):
+        default_password = "terimakasihC3"
+        try:
+            if not os.path.exists(self.password_file):
+                os.makedirs(os.path.dirname(self.password_file), exist_ok=True)
+                with open(self.password_file, 'w', encoding='utf-8') as f:
+                    f.write(default_password)
+                return default_password
+
+            with open(self.password_file, 'r', encoding='utf-8') as f:
+                password = f.read().strip()
+                return password if password else default_password
+        except Exception as e:
+            print(f"[-] Gagal memuat password master: {e}")
+            return default_password
 
     # =====================================================================
     # LOGIKA MULTI-THREADING MANAJEMEN ANTARAEN SENSOR (ANTI-FREEZE)

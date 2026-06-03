@@ -99,6 +99,14 @@ class WelcomeScreen(ctk.CTkFrame):
         self.btn_demo_master = ctk.CTkButton(self.demo_frame, text="TAP — KARTU MASTER", fg_color=C["primary"], hover_color="#5a4c3e", text_color=C["white"], font=("Arial", 11, "bold"), corner_radius=14, height=38, command=lambda: master.proses_login("290744317040"))
         self.btn_demo_master.pack(side="left", padx=6)
 
+        self.btn_master_login = ctk.CTkButton(
+            self, text="M", fg_color=C["primary"], hover_color=C["btn_hover"],
+            text_color=C["white"], font=("Arial", 20, "bold"), corner_radius=12,
+            width=50, height=50,
+            command=lambda: master.buka_popup_login_master()
+        )
+        self.btn_master_login.place(relx=1.0, rely=1.0, x=-25, y=-25, anchor="se")
+
     def update_waktu(self):
         sekarang = datetime.now()
         self.label_tanggal.configure(text=sekarang.strftime("%d %B %Y"))
@@ -112,6 +120,108 @@ class WelcomeScreen(ctk.CTkFrame):
     def reset_status_scan(self):
         self.box_scan.configure(border_color=C["text_dark"])
         self.label_scan.configure(text="Please scan your Rfid!", text_color="black")
+
+
+class MasterLoginPopup(ctk.CTkToplevel):
+    def __init__(self, master_app):
+        super().__init__(master_app)
+        self.master_app = master_app
+        self.title("Login Master")
+        self.configure(fg_color=C["bg"])
+        self.resizable(False, False)
+
+        self.label_title = ctk.CTkLabel(self, text="LOGIN MASTER", font=("Arial", 24, "bold"), text_color=C["primary"])
+        self.label_title.pack(pady=(20, 10), padx=20)
+
+        self.entry_password = ctk.CTkEntry(self, width=280, show="*", font=("Arial", 16), placeholder_text="Masukkan password master")
+        self.entry_password.pack(pady=(0, 10), padx=20)
+        self.entry_password.bind("<Return>", lambda event: self.cek_password())
+
+        self.label_status = ctk.CTkLabel(self, text="", font=("Arial", 12, "bold"), text_color="red")
+        self.label_status.pack(pady=(0, 10), padx=20)
+
+        self.button_frame = ctk.CTkFrame(self, fg_color="transparent")
+        self.button_frame.pack(pady=(0, 20))
+
+        self.btn_login = ctk.CTkButton(self.button_frame, text="LOGIN", fg_color=C["primary"], hover_color=C["btn_hover"], width=110, command=self.cek_password)
+        self.btn_login.pack(side="left", padx=8)
+
+        self.btn_cancel = ctk.CTkButton(self.button_frame, text="BATAL", fg_color="#888888", width=110, command=self.destroy)
+        self.btn_cancel.pack(side="left", padx=8)
+
+        self.update_idletasks()
+        ew, eh = 360, 220
+        ex = self.master_app.winfo_rootx() + (self.master_app.winfo_width() // 2) - (ew // 2)
+        ey = self.master_app.winfo_rooty() + (self.master_app.winfo_height() // 2) - (eh // 2)
+        self.geometry(f"{ew}x{eh}+{ex}+{ey}")
+        self.transient(master_app)
+        self.grab_set()
+
+    def cek_password(self):
+        password = self.entry_password.get().strip()
+        if self.master_app.validate_master_password(password):
+            self.label_status.configure(text="Akses master diberikan", text_color="#0b6623")
+            self.master_app.is_master = True
+            welcome_frame = self.master_app.frames.get("welcome")
+            if welcome_frame:
+                welcome_frame.ubah_status_scan("Akses master diberikan!", "#064e3b")
+            self.destroy()
+            self.master_app.fungsi_navigasi("rombel-select")
+        else:
+            self.label_status.configure(text="Password salah", text_color="#a11313")
+
+
+class ChangePasswordPopup(ctk.CTkToplevel):
+    def __init__(self, master_app):
+        super().__init__(master_app)
+        self.master_app = master_app
+        self.title("Ganti Password Master")
+        self.configure(fg_color=C["bg"])
+        self.resizable(False, False)
+
+        self.label_title = ctk.CTkLabel(self, text="GANTI PASSWORD", font=("Arial", 24, "bold"), text_color=C["primary"])
+        self.label_title.pack(pady=(20, 10), padx=20)
+
+        self.entry_new = ctk.CTkEntry(self, width=280, show="*", font=("Arial", 16), placeholder_text="Password baru")
+        self.entry_new.pack(pady=(0, 10), padx=20)
+
+        self.entry_confirm = ctk.CTkEntry(self, width=280, show="*", font=("Arial", 16), placeholder_text="Konfirmasi password")
+        self.entry_confirm.pack(pady=(0, 10), padx=20)
+
+        self.label_status = ctk.CTkLabel(self, text="", font=("Arial", 12, "bold"), text_color="red")
+        self.label_status.pack(pady=(0, 10), padx=20)
+
+        self.button_frame = ctk.CTkFrame(self, fg_color="transparent")
+        self.button_frame.pack(pady=(0, 20))
+
+        self.btn_save = ctk.CTkButton(self.button_frame, text="SIMPAN", fg_color=C["primary"], hover_color=C["btn_hover"], width=110, command=self.simpan_password)
+        self.btn_save.pack(side="left", padx=8)
+
+        self.btn_cancel = ctk.CTkButton(self.button_frame, text="BATAL", fg_color="#888888", width=110, command=self.destroy)
+        self.btn_cancel.pack(side="left", padx=8)
+
+        self.update_idletasks()
+        ew, eh = 360, 260
+        ex = self.master_app.winfo_rootx() + (self.master_app.winfo_width() // 2) - (ew // 2)
+        ey = self.master_app.winfo_rooty() + (self.master_app.winfo_height() // 2) - (eh // 2)
+        self.geometry(f"{ew}x{eh}+{ex}+{ey}")
+        self.transient(master_app)
+        self.grab_set()
+
+    def simpan_password(self):
+        new_password = self.entry_new.get().strip()
+        confirm_password = self.entry_confirm.get().strip()
+
+        if not new_password:
+            self.label_status.configure(text="Password baru tidak boleh kosong", text_color="#a11313")
+            return
+        if new_password != confirm_password:
+            self.label_status.configure(text="Konfirmasi tidak cocok", text_color="#a11313")
+            return
+
+        self.master_app.set_master_password(new_password)
+        self.label_status.configure(text="Password master berhasil diubah", text_color="#0b6623")
+        self.after(1500, self.destroy)
 
 
 # =====================================================================
@@ -164,6 +274,15 @@ class RombelSelectScreen(ctk.CTkFrame):
         )
         self.btn_update_rfid.grid(row=2, column=3, padx=(30, 15), pady=15)
 
+        self.btn_change_password = ctk.CTkButton(
+            self.grid_frame, text="GANTI PASSWORD", 
+            fg_color=C["primary"], hover_color="#5a4c3e", 
+            text_color=C["text"], font=("Arial", 14, "bold"), 
+            corner_radius=10, width=120, height=40, 
+            command=self.buka_popup_ganti_password
+        )
+        self.btn_change_password.grid(row=3, column=3, padx=(30, 15), pady=15)
+
         daftar_rombel = ["A1", "A2", "A3", "B1", "B2", "B3", "C1", "C2", "C3"]
         
         for index, rombel in enumerate(daftar_rombel):
@@ -180,6 +299,9 @@ class RombelSelectScreen(ctk.CTkFrame):
             command=lambda: self.fungsi_navigasi("welcome")
         )
         self.btn_home.place(x=40, y=400)
+
+    def buka_popup_ganti_password(self):
+        ChangePasswordPopup(self.master)
 
 
 # =====================================================================
@@ -650,9 +772,17 @@ class ExportScreen(ctk.CTkFrame):
         )
 
         if sukses:
+            self.reset_input_tanggal()
             self.tampilkan_pesan("Sukses", pesan, "green", tutup_utama=True)
         else:
             self.tampilkan_pesan("Gagal", pesan, "red")
+
+    def reset_input_tanggal(self):
+        self.entry_awal.delete(0, "end")
+        self.entry_akhir.delete(0, "end")
+        self.check_semua_tgl_var.set("off")
+        self.entry_awal.configure(state="normal", fg_color="#3a3a3a")
+        self.entry_akhir.configure(state="normal", fg_color="#3a3a3a")
 
     def tampilkan_pesan(self, judul, pesan, warna_teks, tutup_utama=False):
         msg_popup = ctk.CTkToplevel(self)

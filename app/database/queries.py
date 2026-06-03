@@ -4,6 +4,10 @@ import os
 import csv
 import sqlite3
 from datetime import datetime
+try:
+    from openpyxl import Workbook
+except Exception:
+    Workbook = None
 
 # =====================================================================
 # 1. INISIALISASI PRESENSI (Dipanggil saat masuk ke NimListScreen)
@@ -191,14 +195,22 @@ def export_to_flashdisk(db_path, seluruh_tanggal=True, tanggal_awal=None, tangga
             if not rows_presensi:
                 conn.close()
                 return False, "Gagal Eksport: Data presensi tidak ditemukan pada tanggal tersebut!"
-                
-            csv_path_presensi = os.path.join(target_dir, f"export_data_presensi_{waktu_ekspor}.csv")
-            with open(csv_path_presensi, mode='w', newline='', encoding='utf-8') as f:
-                writer = csv.writer(f)
-                writer.writerow(["Tanggal", "NIM", "Nama", "Kelas", "Rombel", "Status", "Kedatangan", "Kepulangan"])
-                writer.writerows(rows_presensi)
-            
-            file_terekspor.append("export_data_presensi.csv")
+            # Gunakan XLSX agar kolom terjaga (terutama untuk field yang mengandung koma)
+            if Workbook is None:
+                conn.close()
+                return False, "Modul openpyxl tidak ditemukan. Instal dengan: pip install openpyxl"
+
+            xlsx_path_presensi = os.path.join(target_dir, f"export_data_presensi_{waktu_ekspor}.xlsx")
+            wb = Workbook()
+            ws = wb.active
+            ws.title = "Presensi"
+            headers = ["Tanggal", "NIM", "Nama", "Kelas", "Rombel", "Status", "Kedatangan", "Kepulangan"]
+            ws.append(headers)
+            for row in rows_presensi:
+                # Pastikan setiap elemen cocok untuk dimasukkan
+                ws.append([row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7]])
+            wb.save(xlsx_path_presensi)
+            file_terekspor.append(os.path.basename(xlsx_path_presensi))
 
         if opsi_log:
             query_log = """
@@ -220,14 +232,21 @@ def export_to_flashdisk(db_path, seluruh_tanggal=True, tanggal_awal=None, tangga
             if not rows_log:
                 conn.close()
                 return False, "Gagal Eksport: Data log presensi tidak ditemukan pada tanggal tersebut!"
-                
-            csv_path_log = os.path.join(target_dir, f"export_log_presensi_{waktu_ekspor}.csv")
-            with open(csv_path_log, mode='w', newline='', encoding='utf-8') as f:
-                writer = csv.writer(f)
-                writer.writerow(["Tanggal", "NIM", "Nama", "Kelas", "Rombel", "Perubahan", "Waktu"])
-                writer.writerows(rows_log)
-                
-            file_terekspor.append("export_log_presensi.csv")
+            if Workbook is None:
+                conn.close()
+                return False, "Modul openpyxl tidak ditemukan. Instal dengan: pip install openpyxl"
+
+            xlsx_path_log = os.path.join(target_dir, f"export_log_presensi_{waktu_ekspor}.xlsx")
+            wb_log = Workbook()
+            ws_log = wb_log.active
+            ws_log.title = "LogPresensi"
+            headers_log = ["Tanggal", "NIM", "Nama", "Kelas", "Rombel", "Perubahan", "Waktu"]
+            ws_log.append(headers_log)
+            for row in rows_log:
+                # perubahan bisa mengandung koma, newline; XLSX menangani ini
+                ws_log.append([row[0], row[1], row[2], row[3], row[4], row[5], row[6]])
+            wb_log.save(xlsx_path_log)
+            file_terekspor.append(os.path.basename(xlsx_path_log))
 
         conn.close()
         
@@ -258,8 +277,12 @@ def ekspor_backup_otomatis_sebelum_ditimpa(db_path, target_dir):
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
         
-        # --- BAGIAN 1: BACKUP TABEL PRESENSI HARIAN ---
-        file_harian = os.path.join(target_dir, f"AUTO_BACKUP_Presensi_{timestamp}.csv")
+        # --- BAGIAN 1: BACKUP TABEL PRESENSI HARIAN (XLSX) ---
+        if Workbook is None:
+            conn.close()
+            return False, "Modul openpyxl tidak ditemukan. Instal dengan: pip install openpyxl"
+
+        file_harian = os.path.join(target_dir, f"AUTO_BACKUP_Presensi_{timestamp}.xlsx")
         cursor.execute("""
             SELECT p.tanggal, m.nim, m.nama, m.target_kelas, m.target_rombel, p.status, p.kedatangan, p.kepulangan
             FROM presensi_harian p
@@ -267,14 +290,16 @@ def ekspor_backup_otomatis_sebelum_ditimpa(db_path, target_dir):
             ORDER BY p.tanggal DESC, m.nim ASC
         """)
         data_harian = cursor.fetchall()
-        
-        with open(file_harian, 'w', newline='', encoding='utf-8') as f:
-            writer = csv.writer(f)
-            writer.writerow(["Tanggal", "NIM", "Nama", "Kelas", "Rombel", "Status", "Kedatangan", "Kepulangan"])
-            writer.writerows(data_harian)
+        wb_b = Workbook()
+        ws_b = wb_b.active
+        ws_b.title = "Presensi"
+        ws_b.append(["Tanggal", "NIM", "Nama", "Kelas", "Rombel", "Status", "Kedatangan", "Kepulangan"])
+        for r in data_harian:
+            ws_b.append([r[0], r[1], r[2], r[3], r[4], r[5], r[6], r[7]])
+        wb_b.save(file_harian)
             
         # --- BAGIAN 2: BACKUP TABEL LOG PERUBAHAN (PRESENSI_LOGS) ---
-        file_log = os.path.join(target_dir, f"AUTO_BACKUP_Logs_{timestamp}.csv")
+        file_log = os.path.join(target_dir, f"AUTO_BACKUP_Logs_{timestamp}.xlsx")
         cursor.execute("""
             SELECT p.tanggal, m.nim, m.nama, m.target_kelas, m.target_rombel, l.perubahan, l.waktu
             FROM presensi_logs l
@@ -283,11 +308,13 @@ def ekspor_backup_otomatis_sebelum_ditimpa(db_path, target_dir):
             ORDER BY l.waktu DESC, m.nim ASC
         """)
         data_log = cursor.fetchall()
-        
-        with open(file_log, 'w', newline='', encoding='utf-8') as f:
-            writer = csv.writer(f)
-            writer.writerow(["Tanggal_Absen", "NIM", "Nama", "Kelas", "Rombel", "Perubahan_Log", "Waktu_Eksekusi"])
-            writer.writerows(data_log)
+        wb_l = Workbook()
+        ws_l = wb_l.active
+        ws_l.title = "Logs"
+        ws_l.append(["Tanggal_Absen", "NIM", "Nama", "Kelas", "Rombel", "Perubahan_Log", "Waktu_Eksekusi"])
+        for r in data_log:
+            ws_l.append([r[0], r[1], r[2], r[3], r[4], r[5], r[6]])
+        wb_l.save(file_log)
             
         conn.close()
         
