@@ -875,32 +875,35 @@ class UpdateRfidPopup(ctk.CTkToplevel):
         self.protocol("WM_DELETE_WINDOW", self.aksi_tutup_popup)
 
     def terima_uid_scanned(self, uid_terbaca):
-        """
-        Fungsi gerbang pintu: Dipanggil otomatis oleh main.py ketika 
-        ada kartu yang menyentuh sensor saat pop-up ini terbuka.
-        """
-        # Lempar ke mesin generator pengaman database kita
+        """Fungsi yang menerima ketukan kartu saat pop-up sedang terbuka"""
         sukses, kode, pesan = queries.ubah_rfid_rombel_aman(
             DB_PATH, self.kelas_target, self.rombel_target, uid_terbaca
         )
         
+        # 1. Atur warna kotak berdasarkan status keberhasilan
         if sukses:
-            # Jika berhasil diganti: Ubah kotak jadi Hijau Daun Industri
-            self.box_rfid.configure(fg_color="#1e4620")
-            self.label_status.configure(text=pesan, text_color="white")
-            # Berikan jeda 2.5 detik agar instruktur sempat membaca sukses sebelum pop-up menutup diri
-            self.after(2500, self.aksi_tutup_popup)
+            self.box_rfid.configure(fg_color="#1e4620")  # Hijau Daun
         else:
-            # Jika gagal/bentrok: Ubah kotak jadi Merah Bata Peringatan
             if kode == "REDUNDAN":
-                self.box_rfid.configure(fg_color="#cca010") # Kuning peringatan jika kartu itu-itu juga
+                self.box_rfid.configure(fg_color="#cca010")  # Kuning Peringatan
             else:
-                self.box_rfid.configure(fg_color="#7a2214") # Merah tegas jika dibajak rombel lain/master
+                self.box_rfid.configure(fg_color="#7a2214")  # Merah Error
                 
-            self.label_status.configure(text=pesan, text_color="white")
+        # 2. Tampilkan pesan teks dari database
+        self.label_status.configure(text=pesan, text_color="white")
+        
+        # 3. KUNCI UI/UX: Tutup otomatis pop-up dalam 2.5 detik untuk SEMUA kondisi!
+        self.after(2500, self.aksi_tutup_popup)
 
     def aksi_tutup_popup(self):
-        # Lepaskan ikatan penerima data di main.py sebelum hancur
+        """Fungsi pembersihan memori dan navigasi redirect saat pop-up hancur"""
+        # 1. Lepaskan ikatan penerima data sensor di app/main.py
         if hasattr(self.master.master, 'pendaftar_popup_aktif'):
             self.master.master.pendaftar_popup_aktif(None)
+            
+        # 2. Redirect: Kembalikan layar utama ke menu Daftar Rombel
+        if hasattr(self.master, 'fungsi_navigasi'):
+            self.master.fungsi_navigasi("rombel-select")
+            
+        # 3. Hancurkan jendela pop-up
         self.destroy()

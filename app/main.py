@@ -24,22 +24,28 @@ class App(ctk.CTk):
         
         # --- KONFIGURASI JENDELA UTAMA EMSY ---
         self.title("EMSY - Sistem Presensi Lab")
-        self.geometry("800x480")  # Dioptimalkan untuk layar sentuh 5/7 inci
+        self.geometry("800x480")  
         self.resizable(False, False)
         
         # Standarisasi tema visual CustomTkinter
         ctk.set_appearance_mode("Light")
         
         # --- INISIALISASI VARIABEL LOGIKA & ARSITEKTUR ---
-        self.is_master = False          # Melacak status login pengguna aktif
-        self.popup_aktif = None         # Menyimpan referensi pop-up update RFID yang sedang terbuka
-        self.antrean_rfid = queue.Queue() # Antrean thread-safe penampung ketukan kartu
-        self.reader = RFIDReader()      # Instansiasi driver pembaca kartu RFID (Simulasi/Fisik)
+        self.is_master = False          
+        self.popup_aktif = None         
+        self.antrean_rfid = queue.Queue() 
+        self.reader = RFIDReader()      
+        
+        # =====================================================================
+        # FITUR BARU: Variabel pelacak posisi halaman untuk sistem Auto-Block
+        # Gerbang awal dimulai dari halaman "welcome"
+        # =====================================================================
+        self.halaman_aktif = "welcome"
         
         # Kamus data untuk menyimpan instance layar aplikasi
         self.frames = {}
         
-        # Daftar seluruh layar utama EMSY v2.0 (Skema Single-Batch)
+        # Daftar seluruh layar utama EMSY v2.0
         daftar_layar = {
             "welcome": WelcomeScreen,
             "rombel-select": RombelSelectScreen,
@@ -49,8 +55,7 @@ class App(ctk.CTk):
             "export-screen": ExportScreen
         }
         
-        # Pemanasan Awal (Caching): Render semua layar ke dalam memori
-        # master=self langsung dipasangkan pada root window agar tata letak rapi sempurna
+        # Render semua layar ke dalam memori
         for nama, KelasLayar in daftar_layar.items():
             frame = KelasLayar(master=self, fungsi_navigasi=self.fungsi_navigasi)
             self.frames[nama] = frame
@@ -68,13 +73,18 @@ class App(ctk.CTk):
     # MESIN NAVIGASI & DISTRIBUSI DATA ANTAR LAYAR
     # =====================================================================
     def fungsi_navigasi(self, nama_halaman, data=None):
-        """Mengatur perpindahan layar dan menyuntikkan data parameter jika dibutuhkan"""
+        """Mengatur perpindahan layar dan merekam posisi halaman aktif"""
         frame_target = self.frames.get(nama_halaman)
         if not frame_target:
             print(f"[-] Error: Jendela visual '{nama_halaman}' tidak terdaftar!")
             return
             
-        # Jika ada data kiriman (seperti nama rombel atau indeks mahasiswa), suntikkan ke layar target
+        # =====================================================================
+        # PERUBAHAN DI SINI: Rekam halaman mana yang saat ini sedang dibuka
+        # =====================================================================
+        self.halaman_aktif = nama_halaman
+        print(f"[*] Navigasi Bergeser ke: {self.halaman_aktif}")
+            
         if data is not None and hasattr(frame_target, 'update_data'):
             frame_target.update_data(data)
             
@@ -85,7 +95,6 @@ class App(ctk.CTk):
         # Tampilkan layar target secara penuh
         frame_target.pack(fill="both", expand=True)
         
-        # Atur ulang kotak deteksi jika kembali ke gerbang utama
         if nama_halaman == "welcome":
             frame_target.reset_status_scan()
 
@@ -104,66 +113,65 @@ class App(ctk.CTk):
                 self.is_master = True
                 print(f"🟢 LOGIN BERHASIL: {respons['pesan']}")
                 if welcome_frame:
-                    welcome_frame.ubah_status_scan("Akses Instruktur Diberikan!", "#064e3b") # Hijau
-                
-                # Jeda 1 detik agar instruktur sempat melihat konfirmasi visual sukses
+                    welcome_frame.ubah_status_scan("Akses Instruktur Diberikan!", "#064e3b")
                 self.after(1000, lambda: self.fungsi_navigasi("rombel-select"))
             else:
                 self.is_master = False
                 print(f"🔵 LOGIN BERHASIL: {respons['pesan']}")
                 rombel_nama = f"{respons['kelas']}{respons['rombel']}"
                 if welcome_frame:
-                    welcome_frame.ubah_status_scan(f"Akses Rombel {rombel_nama} Diberikan!", "#1d4e89") # Biru
-                
-                # Jeda 1 detik lalu arahkan perwakilan rombel ke daftar NIM anggota kelasnya
+                    welcome_frame.ubah_status_scan(f"Akses Rombel {rombel_nama} Diberikan!", "#1d4e89")
                 self.after(1000, lambda: self.fungsi_navigasi("nim-list", rombel_nama))
         else:
             print(f"🔴 AKSES DITOLAK: {respons['pesan']}")
             if welcome_frame:
-                welcome_frame.ubah_status_scan(respons["pesan"], "#7a2214") # Merah peringatan
-                self.after(3000, welcome_frame.reset_status_scan) # Kembalikan teks asli dalam 3 detik
+                welcome_frame.ubah_status_scan(respons["pesan"], "#7a2214")
+                self.after(3000, welcome_frame.reset_status_scan)
 
     # =====================================================================
     # LOGIKA MULTI-THREADING MANAJEMEN ANTARAEN SENSOR (ANTI-FREEZE)
     # =====================================================================
     def mulai_thread_rfid(self):
-        """Melahirkan thread pekerja di latar belakang khusus untuk membaca kartu rfid"""
         self.thread_pekerja = threading.Thread(target=self.tugas_satpam_rfid, daemon=True)
         self.thread_pekerja.start()
 
     def tugas_satpam_rfid(self):
-        """Loop abadi pembacaan sensor. Berjalan terpisah dari thread visual utama."""
         while True:
             try:
                 uid = self.reader.baca_kartu()
                 if uid:
-                    self.antrean_rfid.put(uid)  # Titipkan UID yang terbaca ke dalam antrean aman
+                    self.antrean_rfid.put(uid)  
             except Exception as e:
                 print(f"[-] Gangguan pembacaan pada komponen thread RFID: {e}")
-            time.sleep(0.1)  # Mencegah utilitas CPU melonjak (Overhead Protection)
+            time.sleep(0.1)  
 
+    # =====================================================================
+    # PENGENDALI FILTER PIPELINE (GERBANG AUTO-BLOCK)
+    # =====================================================================
     def fungsi_cek_antrean_rfid_berkala(self):
-        """Listener berkala pada thread utama GUI untuk mengecek pipa antrean data kartu"""
+        """Listener berkala pada thread utama GUI dengan proteksi Sesi Terkunci"""
         while not self.antrean_rfid.empty():
             uid_kartu = self.antrean_rfid.get()
             
-            # PROTEKSI PENGALIHAN: Jika ada jendela pop-up ganti RFID yang sedang aktif terbuka, 
-            # kirim UID ke pop-up tersebut, jangan dilempar ke gerbang login menu utama!
+            # PROTEKSI 1: Jika ada jendela pop-up ganti RFID yang terbuka, data harus tetap lolos
             if hasattr(self, 'popup_aktif') and self.popup_aktif is not None:
                 self.popup_aktif.terima_uid_scanned(uid_kartu)
+                
+            # PROTEKSI 2 (CRITICAL AUTO-BLOCK): Jika ada user sedang aktif di dalam sistem 
+            # (di luar layar welcome), langsung abaikan kartu baru yang ditempelkan!
+            elif self.halaman_aktif != "welcome":
+                print(f"🔒 [AUTO-BLOCK] Kartu {uid_kartu} DIABAIKAN. Sesi aktif di halaman '{self.halaman_aktif}'!")
+                continue  # 'continue' akan membuang kartu ini dan langsung memeriksa antrean selanjutnya
+                
+            # KONDISI 3: Jalankan login normal jika aplikasi sedang stand-by di layar welcome
             else:
                 self.proses_login(uid_kartu)
                 
-        # Lakukan pengecekan pipa antrean secara rekursif setiap 100 milidetik
         self.after(100, self.fungsi_cek_antrean_rfid_berkala)
 
     def pendaftar_popup_aktif(self, instance_popup):
-        """Menyediakan gerbang titipan agar pop-up eksternal bisa mendaftarkan dirinya"""
         self.popup_aktif = instance_popup
 
-# =====================================================================
-# TITIK EKSEKUSI UTAMA SISTEM EMSY
-# =====================================================================
 if __name__ == "__main__":
     print("[*] Memulai mesin utama aplikasi EMSY...")
     app = App()
