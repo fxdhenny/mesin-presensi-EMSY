@@ -430,13 +430,19 @@ class StudentDetailScreen(ctk.CTkFrame):
         self.title_label.pack(anchor="center", pady=(0, 20))
         
         # Rumah Matriks Kotak Cokelat
-        self.card_info = ctk.CTkFrame(self.left_frame, fg_color=C["btn"], corner_radius=15, height=250)
-        self.card_info.pack(fill="x")
+        self.card_info = ctk.CTkFrame(self.left_frame, fg_color=C["btn"], corner_radius=15, width=480, height=250)
+        self.card_info.pack(anchor="w", pady=(0, 0))
         self.card_info.pack_propagate(False)
+        self.card_info.grid_propagate(False)
+        for row_index in range(4):
+            self.card_info.grid_rowconfigure(row_index, weight=1)
+        self.card_info.grid_columnconfigure(0, minsize=110)
+        self.card_info.grid_columnconfigure(1, minsize=30)
+        self.card_info.grid_columnconfigure(2, minsize=320)
         
         # --- KOLOM 0: LABEL JUDUL (KIRI) ---
         self.lbl_t_nama = ctk.CTkLabel(self.card_info, text="Nama", text_color=C["white"], font=("Arial", 22, "bold"))
-        self.lbl_t_nama.grid(row=0, column=0, padx=(25, 5), pady=(35, 6), sticky="w")
+        self.lbl_t_nama.grid(row=0, column=0, padx=(25, 5), pady=(0, 6), sticky="w")
         
         self.lbl_t_nim = ctk.CTkLabel(self.card_info, text="NIM", text_color=C["white"], font=("Arial", 22, "bold"))
         self.lbl_t_nim.grid(row=1, column=0, padx=(25, 5), pady=6, sticky="w")
@@ -449,7 +455,7 @@ class StudentDetailScreen(ctk.CTkFrame):
         
         # --- KOLOM 1: PENGUNCI TITIK DUA (TENGAH) ---
         self.lbl_c_nama = ctk.CTkLabel(self.card_info, text=":", text_color=C["white"], font=("Arial", 22, "bold"))
-        self.lbl_c_nama.grid(row=0, column=1, padx=(0, 10), pady=(35, 6), sticky="w")
+        self.lbl_c_nama.grid(row=0, column=1, padx=(0, 10), pady=(0, 6), sticky="w")
         
         self.lbl_c_nim = ctk.CTkLabel(self.card_info, text=":", text_color=C["white"], font=("Arial", 22, "bold"))
         self.lbl_c_nim.grid(row=1, column=1, padx=(0, 10), pady=6, sticky="w")
@@ -463,7 +469,7 @@ class StudentDetailScreen(ctk.CTkFrame):
         # --- KOLOM 2: NILAI DATA DINAMIS (KANAN) ---
         # Diperlebar ke 350 piksel agar nama standar muat dalam 1 baris
         self.label_nama = ctk.CTkLabel(self.card_info, text="", text_color=C["white"], font=("Arial", 22, "bold"), wraplength=350, justify="left")
-        self.label_nama.grid(row=0, column=2, padx=(0, 20), pady=(35, 6), sticky="w")
+        self.label_nama.grid(row=0, column=2, padx=(0, 20), pady=(0, 6), sticky="w")
         
         self.label_nim = ctk.CTkLabel(self.card_info, text="", text_color=C["white"], font=("Arial", 22, "bold"))
         self.label_nim.grid(row=1, column=2, padx=(0, 20), pady=6, sticky="w")
