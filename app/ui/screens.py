@@ -75,7 +75,7 @@ class WelcomeScreen(ctk.CTkFrame):
         self.center_frame.pack(expand=True)
 
         self.label_welcome = ctk.CTkLabel(self.center_frame, text="WELCOME", text_color=C["text_dark"], font=("Poppins", 83, "bold"))
-        self.label_welcome.pack(pady=(80, 10))
+        self.label_welcome.pack(pady=(110, 20))
 
         kapsul_height = 38
         self.box_scan = ctk.CTkFrame(
